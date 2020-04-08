@@ -1,0 +1,16 @@
+#define TRAP_REGS_R10 0x40
+#define TRAP_REGS_R11 0x38
+#define TRAP_REGS_R12 0x18
+#define TRAP_REGS_R13 0x10
+#define TRAP_REGS_R14 0x8
+#define TRAP_REGS_R15 0x0
+#define TRAP_REGS_R8 0x50
+#define TRAP_REGS_R9 0x48
+#define TRAP_REGS_RAX 0x30
+#define TRAP_REGS_RBP 0x20
+#define TRAP_REGS_RBX 0x28
+#define TRAP_REGS_RCX 0x58
+#define TRAP_REGS_RDI 0x70
+#define TRAP_REGS_RDX 0x60
+#define TRAP_REGS_RSI 0x68
+#define TRAP_REGS_SIZE 0x80

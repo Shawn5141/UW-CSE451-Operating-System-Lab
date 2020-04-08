@@ -1,0 +1,5 @@
+# Ignore non source files
+out/
+
+# Don't checkin turn in binary
+xkturnin.tar.gz

@@ -1,0 +1,125 @@
+KERNEL_CFLAGS   += -fno-pic -mno-red-zone
+# no SIMD in kernel
+KERNEL_CFLAGS   += -mno-mmx -mno-sse
+#QEMUOPTS_TCG    += -M q35 -cpu qemu64,+pdpe1gb,+rdtscp,+fsgsbase,+xsave
+
+QEMUOPTS_KVM    += -M q35,accel=kvm,kernel-irqchip=split -cpu host
+#QEMUOPTS    += -netdev user,id=net0,hostfwd=tcp::10007-:7,hostfwd=tcp::10080-:80,hostfwd=tcp::15900-:5900
+#QEMUOPTS    += -device e1000e,netdev=net0 -object filter-dump,id=filter0,netdev=net0,file=$(O)/qemu.pcap
+# old syntax
+#QEMUOPTS   += -net user -net nic,model=e1000 -net dump,file=$(O)/qemu.pcap
+
+IOMMU     ?= intel-iommu
+#QEMUOPTS    += -device $(IOMMU),intremap=on -m 256M
+
+QEMUOPTS += -m 16M
+
+CONFIG_CGA    := 1
+CONFIG_KBD    := 1
+CONFIG_UART_8250  := 1
+CONFIG_UART_PORTE9  := 1
+CONFIG_ACPI   := 1
+CONFIG_E1000    := 1
+
+CONFIG_XK_MEMFS	?= 1
+
+XK_BIN		:= $(O)/xk.bin
+XK_ELF		:= $(basename $(XK_BIN)).elf
+XK_ASM		:= $(basename $(XK_BIN)).asm
+XK_IMG		:= $(basename $(XK_BIN)).img
+
+XK_KERNEL_SRCS := \
+  kernel/bio.c \
+  kernel/console.c \
+  kernel/cpuid.c \
+  kernel/e820.c \
+  kernel/entry.S \
+  kernel/exec.c \
+  kernel/file.c \
+  kernel/fs.c \
+  kernel/ide.c \
+  kernel/ioapic.c \
+  kernel/kalloc.c \
+  kernel/kbd.c \
+  kernel/lapic.c \
+  kernel/main.c \
+  kernel/mp.c \
+  kernel/picirq.c \
+  kernel/proc.c \
+  kernel/sleeplock.c \
+  kernel/spinlock.c \
+  kernel/string.c \
+  kernel/swtch.S \
+  kernel/syscall.c \
+  kernel/sysfile.c \
+  kernel/sysproc.c \
+  kernel/trap.c \
+  kernel/trapasm.S \
+  kernel/uart.c \
+  kernel/vectors.S \
+  kernel/vspace.c \
+  kernel/x86_64vm.c \
+
+
+XK_KERNEL_OBJS	:= $(addprefix $(O)/,$(patsubst %.c,%.o,$(patsubst %.S,%.o,$(XK_KERNEL_SRCS))))
+
+LDFLAGS_KERNEL   := -m elf_x86_64 -nodefaultlibs --oformat elf64-x86-64
+
+GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
+QEMUGDB := -gdb tcp::$(GDBPORT)
+
+$(O)/initcode : kernel/initcode.S user/lab1test.c $(ULIB)
+	$(CC) -g -nostdinc -I inc -c kernel/initcode.S -o $(O)/initcode.o
+	$(CC) -g -ffreestanding -MD -MP -mno-sse -I inc -c user/lab1test.c -o $(O)/lab1test.o
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(O)/initcode.out $(O)/initcode.o $(O)/lab1test.o $(ULIB)
+	$(OBJCOPY) -S -O binary $(O)/initcode.out $(O)/initcode
+	$(OBJDUMP) -S $(O)/initcode.out > $(O)/initcode.asm
+
+$(O)/bootblock: kernel/bootasm.S kernel/bootmain.c
+	$(CC) -m32 -fno-pic -Os -I inc -c kernel/bootmain.c -o $(O)/bootmain.o
+	$(CC) -m32 -fno-pic -nostdinc -I inc -c kernel/bootasm.S -o $(O)/bootasm.o
+	$(LD) $(LDFLAGS) -m elf_i386 -N -e start -Ttext 0x7C00 -o $(O)/bootblock.o $(O)/bootasm.o $(O)/bootmain.o
+	$(OBJDUMP) -S $(O)/bootblock.o > $(O)/bootblock.asm
+	$(OBJCOPY) -S -O binary -j .text $(O)/bootblock.o $(O)/bootblock
+	./sign.pl $(O)/bootblock
+
+xk: $(XK_BIN) $(XK_ASM) $(O)/xk_memfs $(O)/bootblock $(O)/xk.img
+
+$(XK_ELF): $(XK_KERNEL_OBJS) $(KERNEL_LDS) $(O)/initcode
+	$(QUIET_LD)$(LD) $(LDFLAGS_KERNEL) -o $@ -T $(KERNEL_LDS) $(XK_KERNEL_OBJS) -b binary $(O)/initcode
+
+$(O)/xk.img: $(O)/bootblock $(XK_ASM)
+	dd if=/dev/zero of=$(O)/xk.img count=10000
+	dd if=$(O)/bootblock of=$(O)/xk.img conv=notrunc
+	dd if=$(XK_ELF) of=$(O)/xk.img seek=1 conv=notrunc
+
+xk-qemu-memfs: xk $(O)/fs.img
+	$(QEMU) $(QEMUOPTS_TCG) $(QEMUOPTS) -kernel $(O)/xk_memfs -nographic
+
+xk-qemu: xk $(O)/fs.img
+	$(QEMU) $(QEMUOPTS_TCG) $(QEMUOPTS) -drive file=$(O)/fs.img,index=1,media=disk,format=raw -drive file=$(O)/xk.img,index=0,media=disk,format=raw -nographic
+
+xk-qemu-memfs-gdb: $(O)/xk_memfs
+	sed "s/ELF/xk_memfs.elf/" < .gdbinit.tmpl > .gdbinit.tmpl1
+	sed "s/0.0.0.0:1234/localhost:$(GDBPORT)/" < .gdbinit.tmpl1 > .gdbinit
+	$(QEMU) $(QEMUOPTS_TCG) $(QEMUOPTS) -kernel $(O)/xk_memfs -nographic -S $(QEMUGDB)
+
+xk-qemu-gdb: xk $(O)/fs.img
+	sed "s/ELF/xk.elf/" < .gdbinit.tmpl > .gdbinit.tmpl1
+	sed "s/0.0.0.0:1234/localhost:$(GDBPORT)/" < .gdbinit.tmpl1 > .gdbinit
+	$(QEMU) $(QEMUOPTS_TCG) $(QEMUOPTS) -drive file=$(O)/fs.img,index=1,media=disk,format=raw -drive file=$(O)/xk.img,index=0,media=disk,format=raw -nographic -S $(QEMUGDB)
+
+xk-memfs-gdb: .gdbinit
+	$(GDB)
+
+xk-gdb: .gdbinit
+	$(GDB)
+
+MEMFSOBJS = $(filter-out $(O)/kernel/ide.o,$(XK_KERNEL_OBJS)) $(O)/kernel/memide.o
+
+$(O)/xk_memfs.elf: $(MEMFSOBJS) $(O)/initcode $(KERNEL_LDS) $(O)/fs.img
+	$(QUIET_LD)$(LD) $(LDFLAGS_KERNEL) -o $@ -T $(KERNEL_LDS) $(MEMFSOBJS) -b binary $(O)/initcode $(O)/fs.img
+	$(OBJDUMP) -S $(O)/xk_memfs.elf > $(O)/xk_memfs.asm
+
+$(O)/xk_memfs: $(O)/xk_memfs.elf
+	$(OBJCOPY) -S -O binary $(O)/xk_memfs.elf $(O)/xk_memfs

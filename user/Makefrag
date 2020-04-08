@@ -1,0 +1,49 @@
+ULIB = \
+	$(O)/user/printf.o \
+	$(O)/user/ulib.o \
+	$(O)/user/usys.o \
+	$(O)/user/umalloc.o \
+
+XK_UPROGS := \
+	$(O)/user/_sh \
+	$(O)/user/_init \
+	$(O)/user/_cat \
+	$(O)/user/_echo \
+	$(O)/user/_grep \
+	$(O)/user/_kill \
+	$(O)/user/_ln \
+	$(O)/user/_ls \
+	$(O)/user/_rm \
+	$(O)/user/_stressfs \
+	$(O)/user/_wc \
+	$(O)/user/_zombie \
+	$(O)/user/_sysinfo \
+	$(O)/user/_lab1test \
+	$(O)/user/_lab2test \
+	$(O)/user/_lab3test \
+	$(O)/user/_lab3init \
+	$(O)/user/_lab4test_a \
+	$(O)/user/_lab4test_b \
+	$(O)/user/_lab4test_c \
+
+
+XK_TEXT_FILES := \
+	$(O)/user/small.txt \
+	$(O)/user/l2_share.txt \
+
+XK_UPROGS_OBJS := $(addsuffix .o,$(XK_UPROGS))
+
+XK_UPROGS_ASMS := $(addsuffix .asm,$(XK_UPROGS))
+
+$(O)/user/_%: $(O)/user/%.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
+	$(OBJDUMP) -S $@ > $@.asm
+
+$(O)/user/%.txt:
+	cp user/$*.txt $@
+
+$(O)/mkfs: mkfs.c
+	$(QUIET_GEN)$(HOST_CC) -I . -o $@ $<
+
+$(O)/fs.img: $(O)/mkfs $(XK_UPROGS) $(XK_TEXT_FILES)
+	$(QUIET_GEN)$(O)/mkfs $@ $(XK_UPROGS) $(XK_TEXT_FILES) > /dev/null

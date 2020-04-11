@@ -1,0 +1,22 @@
+Part 1:
+
+1. Line 22 prints the CPU info. Line 24 prints the physical memory table
+
+2. The memory address of main is 0xffffffff801034aa. GDB works with virtual addresses not physical
+
+Part 2:
+
+3. xk maps kernel and user-application into the same address space so that the kernel's system call code can directly refer to user memory thus improving effeciency and performance
+
+4. xk user malloc is a library call that obtains free memory in ths user address space. The kernel kalloc finds free pages in physical memory and allocates the contiguous memory. It is also reserved and locked. 
+The user printf only prints to a given file descriptor. The kernel printf prints to the console. 
+
+
+Part 4:
+
+5.
+
+
+6.
+
+

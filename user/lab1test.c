@@ -42,6 +42,7 @@ int main() {
   // dup(0);     // stderr
   
   printf(stdout, "hello world\n");
+  sleep(10);
 
   while (1);
 

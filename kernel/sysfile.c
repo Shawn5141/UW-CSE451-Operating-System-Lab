@@ -51,7 +51,41 @@ int sys_fstat(void) {
 
 int sys_open(void) {
   // LAB1
-  return -1;
+  char *path; //path to the file 
+  int mode; // mode got opening the file 
+  struct inode *iptr;
+  int fd;
+
+  //Errors: return -1
+  //no available file descriptor
+  //O_CREATE mode not supported for this lab 
+
+  if(argstr(0, &path) < 0 || argint(1, &mode) < 0)
+    return -1;
+
+
+  //invalid or unmapped address or file dne 
+  iptr = namei(path); // find the inode with the path - increments reference count
+  if(mode != O_CREATE && iptr == 0) 
+    return -1;
+
+  //Verify user input
+  //invalid permission
+  if(mode != O_RDONLY && mode != O_WRONLY && mode != O_RDWR)
+    return -1;
+
+
+  locki(iptr);
+  if(iptr->type == ??) {
+    unlocki(iptr);
+    return -1;
+  }
+
+
+  //call appropriate file function
+  fd = fileopen(iptr, mode);
+  return fd;
+
 }
 
 int sys_exec(void) {

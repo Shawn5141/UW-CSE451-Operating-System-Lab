@@ -88,8 +88,7 @@ int sys_open(void) {
 
 
   //invalid or unmapped address or file dne 
-  iptr = namei(path); // find the inode with the path - increments reference count
-  if(mode != O_CREATE && iptr == 0) 
+  if(mode != O_CREATE) 
     return -1;
 
   //Verify user input
@@ -98,15 +97,10 @@ int sys_open(void) {
     return -1;
 
 
-  locki(iptr);
-  if(iptr->type == ??) {
-    unlocki(iptr);
-    return -1;
-  }
 
 
   //call appropriate file function
-  fd = fileopen(iptr, mode);
+  fd = fileopen(path);
   return fd;
 
 }

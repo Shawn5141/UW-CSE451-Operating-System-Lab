@@ -51,6 +51,29 @@ int sys_fstat(void) {
 
 int sys_open(void) {
   // LAB1
+ /*
+  * arg0: char * [path to the file]
+ *  arg1: int [mode for opening the file (see inc/fcntl.h)]
+ *
+ * Given a pathname for a file, sys_open() returns a file descriptor, a small,
+ * nonnegative integer for use in subsequent system calls. The file descriptor
+ * returned by a successful call will be the lowest-numbered file descriptor
+ * not currently open for the process.
+ *         
+ *  Each open file maintains a current position, initially zero.
+ *           
+ ** returns -1 on error
+ *             
+ *  * Errors:
+ *     arg0 points to an invalid or unmapped address 
+ *     there is an invalid address before the end of the string 
+ *     the file does not exist
+ *     since the file system is read only, flag O_CREATE is not permitted
+ *     there is no available file descriptor
+ *                   
+ *     note that for lab1, the file system does not support file create
+ *     */
+
   return -1;
 }
 

@@ -1,0 +1,99 @@
+fs.c:  memmove(sb, bp->data, sizeof(*sb));
+fs.c:// not stored on disk: ip->ref and ip->flags.
+fs.c:    if (ip->ref > 0 && ip->dev == dev && ip->inum == inum) {
+fs.c:      ip->ref++;
+fs.c:    if (empty == 0 && ip->ref == 0) // Remember empty slot.
+fs.c:  ip->ref = 1;
+fs.c:  ip->valid = 0;
+fs.c:  ip->dev = dev;
+fs.c:  ip->inum = inum;
+fs.c:  ip->ref++;
+fs.c:  if (ip->ref == 1)
+fs.c:    ip->type = 0;
+fs.c:  ip->ref--;
+fs.c:  if(ip == 0 || ip->ref < 1)
+fs.c:  acquiresleep(&ip->lock);
+fs.c:  if (ip->valid == 0) {
+fs.c:    read_dinode(ip->inum, &dip);
+fs.c:    ip->type = dip.type;
+fs.c:    ip->devid = dip.devid;
+fs.c:    ip->size = dip.size;
+fs.c:    ip->data = dip.data;
+fs.c:    ip->valid = 1;
+fs.c:    if (ip->type == 0)
+fs.c:  if(ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1)
+fs.c:  releasesleep(&ip->lock);
+fs.c:// Caller must hold ip->lock.
+fs.c:  if (!holdingsleep(&ip->lock))
+fs.c:  st->dev = ip->dev;
+fs.c:  st->ino = ip->inum;
+fs.c:  st->type = ip->type;
+fs.c:  st->size = ip->size;
+fs.c:// Caller must hold ip->lock.
+fs.c:  if (!holdingsleep(&ip->lock))
+fs.c:  if (ip->type == T_DEV) {
+fs.c:    if (ip->devid < 0 || ip->devid >= NDEV || !devsw[ip->devid].read)
+fs.c:    return devsw[ip->devid].read(ip, dst, n);
+fs.c:  if (off > ip->size || off + n < off)
+fs.c:  if (off + n > ip->size)
+fs.c:    n = ip->size - off;
+fs.c:    bp = bread(ip->dev, ip->data.startblkno + off / BSIZE);
+fs.c:    memmove(dst, bp->data + off % BSIZE, m);
+fs.c:// Caller must hold ip->lock.
+fs.c:  if (!holdingsleep(&ip->lock))
+fs.c:  if (ip->type == T_DEV) {
+fs.c:    if (ip->devid < 0 || ip->devid >= NDEV || !devsw[ip->devid].write)
+fs.c:    return devsw[ip->devid].write(ip, src, n);
+fs.c:  if (dp->type != T_DIR)
+fs.c:  for (off = 0; off < dp->size; off += sizeof(de)) {
+fs.c:      return iget(dp->dev, inum);
+fs.c:    if (ip->type != T_DIR) {
+mp.c:  if ((mp = mpsearch()) == 0 || mp->physaddr == 0)
+mp.c:  conf = (struct mpconf *)P2V((uint64_t)mp->physaddr);
+mp.c:  if (mp->imcrp) {
+proc.c:    if (p->state == UNUSED)
+proc.c:  p->state = EMBRYO;
+proc.c:  p->pid = nextpid++;
+proc.c:  p->killed = 0;
+proc.c:  if ((p->kstack = kalloc()) == 0) {
+proc.c:    p->state = UNUSED;
+proc.c:  sp = p->kstack + KSTACKSIZE;
+proc.c:  sp -= sizeof *p->tf;
+proc.c:  p->tf = (struct trap_frame *)sp;
+proc.c:  sp -= sizeof *p->context;
+proc.c:  p->context = (struct context *)sp;
+proc.c:  memset(p->context, 0, sizeof *p->context);
+proc.c:  p->context->rip = (uint64_t)forkret;
+proc.c:  assertm(vspaceinit(&p->vspace) == 0, "error initializing process's virtual address descriptor");
+proc.c:  vspaceinitcode(&p->vspace, _binary_out_initcode_start, (int64_t)_binary_out_initcode_size);
+proc.c:  memset(p->tf, 0, sizeof(*p->tf));
+proc.c:  p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
+proc.c:  p->tf->ss = (SEG_UDATA << 3) | DPL_USER;
+proc.c:  p->tf->rflags = FLAGS_IF;
+proc.c:  p->tf->rip = VRBOT(&p->vspace.regions[VR_CODE]);  // beginning of initcode.S
+proc.c:  p->tf->rsp = VRTOP(&p->vspace.regions[VR_USTACK]);
+proc.c:  safestrcpy(p->name, "initcode", sizeof(p->name));
+proc.c:  // this assignment to p->state lets other cores
+proc.c:  p->state = RUNNABLE;
+proc.c:      if (p->state != RUNNABLE)
+proc.c:      p->state = RUNNING;
+proc.c:      swtch(&mycpu()->scheduler, p->context);
+proc.c:      // It should have changed its p->state before coming back.
+proc.c:  // change p->state and then call sched.
+proc.c:    if (p->state == SLEEPING && p->chan == chan)
+proc.c:      p->state = RUNNABLE;
+proc.c:    if (p->pid == pid) {
+proc.c:      p->killed = 1;
+proc.c:      if (p->state == SLEEPING)
+proc.c:        p->state = RUNNABLE;
+proc.c:    if (p->state == UNUSED)
+proc.c:    if (p->state != 0 && p->state < NELEM(states) && states[p->state])
+proc.c:      state = states[p->state];
+proc.c:    cprintf("%d %s %s", p->pid, state, p->name);
+proc.c:    if (p->state == SLEEPING) {
+proc.c:      getcallerpcs((uint64_t *)p->context->rbp, pc);
+proc.c:    if (p->pid == pid)
+vspace.c:  if (!p->kstack)
+vspace.c:  if (!p->vspace.pgtbl)
+vspace.c:  mycpu()->ts.rsp0 = (uint64_t)p->kstack + KSTACKSIZE;
+vspace.c:  lcr3(V2P(p->vspace.pgtbl));

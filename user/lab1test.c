@@ -40,7 +40,7 @@ int main() {
   // }
   // dup(0);     // stdout
   // dup(0);     // stderr
-  
+  sleep(100); 
   printf(stdout, "hello world\n");
   sleep(10);
 

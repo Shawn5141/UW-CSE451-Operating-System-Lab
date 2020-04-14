@@ -29,3 +29,10 @@ extern struct devsw devsw[];
 enum {
   CONSOLE = 1,
 };
+//File info struct
+struct file_info{
+    int ref;//reference count
+    struct inode* iptr;
+    int current_offset;
+    int access_permission;// not sure whether it's a right type
+}

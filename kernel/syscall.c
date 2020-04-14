@@ -130,7 +130,7 @@ int argstr(int n, char **pp) {
 }
 // Check if file descripter is valid or not
 int argfd(int n, int*fd){
-   if(n<0 || n>NOFILE||*(fd+n)==NULL)// the file at that pass is not open or offbound
+   if(n<0 || n>NOFILE||*(fd)==NULL)// the file at that pass is not open or offbound
       return -1;
    return 1; // not sure what value should return here
 }

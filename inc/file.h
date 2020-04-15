@@ -35,4 +35,4 @@ struct file_info{
     struct inode* iptr;
     int current_offset;
     int access_permission;// not sure whether it's a right type
-}
+};

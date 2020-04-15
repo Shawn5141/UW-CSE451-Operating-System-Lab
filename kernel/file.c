@@ -13,7 +13,7 @@
 struct devsw devsw[NDEV];
 static struct file_info ftable[NFILE];
 
-int void fileopen(char *path){
+int fileopen(char *path){
   /*
  *Finds an open spot in the process open file table and has it point the global open file table entry .
  * Finds an open entry in the global open file table and allocates a new file_info struct
@@ -23,10 +23,10 @@ Returns the index into the process open file table as the file descriptor, or -1
  *
  * 
  */
-  iptr = namei(path); // find the inode with the path - increments reference count
+  struct inode* iptr = namei(path); // find the inode with the path - increments reference count
   
   //need to allocate emtpy stat
-  struct stat istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
+  struct stat *istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
   // This function is inspired by thread on Ed : https://us.edstem.org/courses/399/discussion/28068
   concurrent_stati(iptr,istat);
   if(iptr == 0)
@@ -38,32 +38,30 @@ Returns the index into the process open file table as the file descriptor, or -1
 
 // find open slot on process open file table pftable
  int pfd =0;//process file descriptor index
- for(pfd=0;pdf<NOFILE;pfd++){
+ for(pfd=0;pfd<NOFILE;pfd++){
     if(pftable[pfd]) { //TODO Not sure how to check is emtpty
        break;
-   }
+  }
+ }
  int gfd =0;//global file descriptor index
   for(gfd=0;gfd<NFILE;gfd++){
-    if(ftable[gfd]){//TODO Not sure how to check is empty
+    if(ftable[gfd].iptr==NULL){//TODO Not sure how to check is empty
        break;
     }
   }
   //Update ftable[gfd] file_info struct value 
-  ftable[gfd]->ref=0;
-  ftable[gfd]->iptr = iptr;
-  ftable[gfd]->current_offset =0;//should it be zero?
-  ftable[gfd]->access_permission= 0;//TODO Not sure what value should be assign here
+  ftable[gfd].ref=0;
+  ftable[gfd].iptr = iptr;
+  ftable[gfd].current_offset =0;//should it be zero?
+  ftable[gfd].access_permission= 0;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
   pftable[pfd] = gfd;
   //Will always open device
   if(istat->type ==3)return pfd;
-  if(istat->type ==2&& ftable[gfd]->access_permission =0){
+  if(istat->type ==2&& ftable[gfd].access_permission ==0){
     return pfd;
-  }else{
-    return -1;
   }
-
-}
+  return -1;
 
 }
 

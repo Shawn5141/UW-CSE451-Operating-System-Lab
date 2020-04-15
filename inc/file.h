@@ -2,7 +2,7 @@
 
 #include <extent.h>
 #include <sleeplock.h>
-
+#include <param.h>
 // in-memory copy of an inode
 struct inode {
   uint dev;  // Device number
@@ -37,6 +37,6 @@ struct file_info{
     int access_permission;// not sure whether it's a right type
 };
 
+static struct file_info ftable[NFILE];
 
-int fileopen(char* path);
 

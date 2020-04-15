@@ -76,7 +76,7 @@ int sys_open(void) {
 
   char *path; //path to the file 
   int mode; // mode got opening the file 
-  struct inode *iptr;
+  //struct inode *iptr;
   int fd;
 
   //Errors: return -1
@@ -88,19 +88,19 @@ int sys_open(void) {
 
 
   //invalid or unmapped address or file dne 
-  if(mode != O_CREATE) 
+  if(mode == O_CREATE) 
     return -1;
 
   //Verify user input
   //invalid permission
-  if(mode != O_RDONLY && mode != O_WRONLY && mode != O_RDWR)
-    return -1;
+  //if(mode != O_RDONLY && mode != O_WRONLY && mode != O_RDWR)
+   // return -1;
 
 
 
 
   //call appropriate file function
-  fd = fileopen(path);
+  fd = fileopen(path,mode);
   return fd;
 
 }

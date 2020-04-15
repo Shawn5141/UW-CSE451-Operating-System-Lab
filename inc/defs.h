@@ -154,6 +154,9 @@ void wakeup(void *);
 void yield(void);
 void reboot(void);
 
+
+//file.c
+int fileopen(char* path,int mode);
 // swtch.S
 void swtch(struct context **, struct context *);
 

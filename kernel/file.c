@@ -1,4 +1,4 @@
-//
+
 // File descriptors
 //
 
@@ -11,10 +11,12 @@
 #include <spinlock.h>
 #include <stat.h>
 #include <proc.h>
-struct devsw devsw[NDEV];
-static struct file_info ftable[NFILE];
+#include <fcntl.h>
 
-int fileopen(char *path){
+struct devsw devsw[NDEV];
+//static struct file_info ftable[NFILE];
+
+int fileopen(char *path,int mode){
   /*
  *Finds an open spot in the process open file table and has it point the global open file table entry .
  * Finds an open entry in the global open file table and allocates a new file_info struct
@@ -37,6 +39,8 @@ Returns the index into the process open file table as the file descriptor, or -1
        unlocki(iptr);
        return -1;
   }
+  if(iptr->type==2&&mode!=O_RDONLY)
+      return -1;
 
 // find open slot on process open file table pftable
  int pfd =0;//process file descriptor index
@@ -55,16 +59,11 @@ Returns the index into the process open file table as the file descriptor, or -1
   ftable[gfd].ref=0;
   ftable[gfd].iptr = iptr;
   ftable[gfd].current_offset =0;//should it be zero?
-  ftable[gfd].access_permission= 0;//TODO Not sure what value should be assign here
+  ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
   myproc()->pftable[pfd] = &gfd;
   //Will always open device
-  if(istat->type ==3)return pfd;
-  if(istat->type ==2&& ftable[gfd].access_permission ==0){
-    return pfd;
-  }
-
-  return -1;
+  return pfd;
 
 }
 

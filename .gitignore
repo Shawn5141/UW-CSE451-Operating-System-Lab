@@ -1,5 +1,6 @@
 # Ignore non source files
 out/
 *.swp
+*.swo
 # Don't checkin turn in binary
 xkturnin.tar.gz

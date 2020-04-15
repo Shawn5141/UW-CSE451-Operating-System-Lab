@@ -32,9 +32,9 @@ Returns the index into the process open file table as the file descriptor, or -1
   struct stat *istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
   memset(&istat,0,sizeof(istat));
   // This function is inspired by thread on Ed : https://us.edstem.org/courses/399/discussion/28068
-  concurrent_stati(iptr,istat);
   if(iptr == 0)
     return -1;
+  concurrent_stati(iptr,istat);
   if(iptr->type==1){ //TODO need to double check whehter it will return -1 if inode is directory //number can refer to stat.h in inc
        unlocki(iptr);
        return -1;

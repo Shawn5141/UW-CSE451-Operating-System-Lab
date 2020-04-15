@@ -43,7 +43,7 @@ int main() {
   sleep(100); 
   printf(stdout, "hello world\n");
   sleep(10);
-
+  testopen();
   while (1);
 
   testopen();

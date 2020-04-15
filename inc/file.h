@@ -36,3 +36,7 @@ struct file_info{
     int current_offset;
     int access_permission;// not sure whether it's a right type
 };
+
+
+int fileopen(char* path);
+

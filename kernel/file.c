@@ -10,6 +10,7 @@
 #include <sleeplock.h>
 #include <spinlock.h>
 #include <stat.h>
+#include <proc.h>
 struct devsw devsw[NDEV];
 static struct file_info ftable[NFILE];
 
@@ -27,6 +28,7 @@ Returns the index into the process open file table as the file descriptor, or -1
   
   //need to allocate emtpy stat
   struct stat *istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
+  memset(&istat,0,sizeof(istat));
   // This function is inspired by thread on Ed : https://us.edstem.org/courses/399/discussion/28068
   concurrent_stati(iptr,istat);
   if(iptr == 0)
@@ -39,7 +41,7 @@ Returns the index into the process open file table as the file descriptor, or -1
 // find open slot on process open file table pftable
  int pfd =0;//process file descriptor index
  for(pfd=0;pfd<NOFILE;pfd++){
-    if(pftable[pfd]) { //TODO Not sure how to check is emtpty
+    if(myproc()->pftable[pfd]==NULL) { //TODO Not sure how to check is emtpty
        break;
   }
  }
@@ -55,12 +57,13 @@ Returns the index into the process open file table as the file descriptor, or -1
   ftable[gfd].current_offset =0;//should it be zero?
   ftable[gfd].access_permission= 0;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
-  pftable[pfd] = gfd;
+  myproc()->pftable[pfd] = &gfd;
   //Will always open device
   if(istat->type ==3)return pfd;
   if(istat->type ==2&& ftable[gfd].access_permission ==0){
     return pfd;
   }
+
   return -1;
 
 }

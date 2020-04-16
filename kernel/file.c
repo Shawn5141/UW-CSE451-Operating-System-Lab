@@ -39,11 +39,11 @@ Returns the index into the process open file table as the file descriptor, or -1
        unlocki(iptr);
        return -1;
   }
-  if(iptr->type==2&&mode!=O_RDONLY)
+  if(iptr->type==2 && mode!=O_RDONLY)
       return -1;
 
 // find open slot on process open file table pftable
- int pfd =0;//process file descriptor index
+ int pfd = 0;//process file descriptor index
  for(pfd=0;pfd<NOFILE;pfd++){
     if(myproc()->pftable[pfd]==NULL) { //TODO Not sure how to check is emtpty
        break;
@@ -67,3 +67,22 @@ Returns the index into the process open file table as the file descriptor, or -1
 
 }
 
+int filestat(struct file_info *f, struct stat *fstat) {
+
+}
+
+int fileclose(struct proc *p, struct file_info *f, int fd) {
+
+}
+
+int fileread(struct file_info *f, char *buf, int bytes_read) {
+
+}
+
+int filewrite(struct file_info *f, char *buf, int bytes_written) {
+
+}
+
+int filedup(struct proc *p, struct file_info *f) {
+
+}

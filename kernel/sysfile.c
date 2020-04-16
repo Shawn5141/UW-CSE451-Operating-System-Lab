@@ -18,35 +18,117 @@
 
 int sys_dup(void) {
   // LAB1
-  return -1;
+  int fd;
+
+  if(argfd(0, &fd) < 0)
+    return -1;
+
+  //check if fd is valid in global file table
+  struct proc *p = myproc();
+
+  struct file_info f = ftable[*(p->pftable[fd])];
+
+  //TODO
+
+  int res = filedup(p, &f);
+
+
+  return res;
 }
 
 int sys_read(void) {
   // LAB1
-  return -1;
+  int fd;
+  char *buf;
+  int bytes_read;
+
+  //fd is not a file descriptor open for read
+  if(argfd(0, &fd) < 0)
+    return -1;
+
+  struct file_info f= ftable[*(myproc()->pftable[fd])];
+  //TODO: check file permissions
+
+
+  //Number of bytes to read is not positive
+  argint(2, &bytes_read);
+  if(bytes_read < 0)
+    return -1;
+
+  //Some address between [arg1, arg1+arg2-1] is invalid
+  if(argptr(1, &buf, bytes_read) < 0)
+    return -1;
+
+  int res = fileread(&f, buf, bytes_read);
+
+  return res;
 }
 
 int sys_write(void) {
-  // you have to change the code in this function.
-  // Currently it supports printing one character to the screen.
+  int fd;
+  char *buf;
+  int bytes_written;
 
-  int n;
-  char *p;
-
-  if (argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+  //if fd is not a file descriptor open for write
+  if(argfd(0, &fd) < 0)
     return -1;
-  uartputc((int)(*p));
-  return 1;
+
+
+  struct file_info f = ftable[*(myproc()->pftable[fd])];
+  //TODO: check permissions
+
+
+  //number of bytes to write is not positive
+  argint(2, &bytes_written);
+  if(bytes_written < 0)
+    return -1;
+
+  //Some address between [arg1, arg1+arg2-1] is invalid
+  if(argptr(1, &buf, bytes_written) < 0 || argstr(1, &buf) < 0)
+    return -1;
+
+  int res = filewrite(&f, buf, bytes_written);
+
+  return res;
 }
 
 int sys_close(void) {
   // LAB1
-  return -1;
+  int fd;
+
+  //fd is not an open file descriptor
+  if(argfd(0, &fd) < 0)
+    return -1;
+
+  //check if given fd is valid in global file table
+  struct proc *p = myproc();
+  struct file_info f = ftable[*(p->pftable[fd])];
+
+  //TODO
+
+  int res = fileclose(p, &f, fd);
+  return res;
 }
 
 int sys_fstat(void) {
   // LAB1
-  return -1;
+  int fd;
+  struct stat *fstat;
+
+  //fd is not an open file descriptor
+  if(argfd(0, &fd) < 0)
+    return -1;
+
+  //check if given fd is valid in the global file table
+  struct file_info f = ftable[*(myproc()->pftable[fd])];
+  //TODO
+
+  //if there is an invalid address between [arg1, arg1+sizeof(fstat)]
+  if(argptr(1, (char**)(&fstat), sizeof(fstat)) == -1)
+    return -1;
+
+  int res = filestat(&f, fstat);
+  return res;
 }
 
 int sys_open(void) {
@@ -95,8 +177,6 @@ int sys_open(void) {
   //invalid permission
   //if(mode != O_RDONLY && mode != O_WRONLY && mode != O_RDWR)
    // return -1;
-
-
 
 
   //call appropriate file function

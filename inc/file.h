@@ -39,4 +39,15 @@ struct file_info{
 
 static struct file_info ftable[NFILE];
 
+//file.c
+int fileopen(char *path, int mode);
 
+int filedup(struct proc *p, struct file_info *f);
+
+int fileread(struct file_info *f, char *buf, int bytes_read);
+
+int filewrite(struct file_info *f, char *buf, int bytes_written);
+
+int fileclose(struct proc *p, struct file_info *f, int fd);
+
+int filestat(struct file_info *f, struct stat *fstat);

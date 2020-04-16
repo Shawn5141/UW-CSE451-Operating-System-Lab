@@ -65,6 +65,19 @@ int sys_read(void) {
 }
 
 int sys_write(void) {
+  //you have to change the code in this function.
+  // Currently it supports printint one character to the screen.
+
+  int n;
+  char *p;
+
+  if(argint(2, &n) < 0 || argptr(1, &p, n) < 0 )
+    return -1;
+  uartputc((int)(*p));
+  return 1;
+  
+
+/*
   int fd;
   char *buf;
   int bytes_written;
@@ -90,6 +103,7 @@ int sys_write(void) {
   int res = filewrite(&f, buf, bytes_written);
 
   return res;
+  */
 }
 
 int sys_close(void) {

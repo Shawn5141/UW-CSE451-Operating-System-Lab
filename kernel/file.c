@@ -105,14 +105,6 @@ int filestat(struct file_info *f, struct stat *fstat) {
 }
 
 int fileclose(struct proc *p, struct file_info *f, int fd) {
-  /*
-   if(f[*p->pftable[fd]].ref==1){
-       f[*p->pftable[fd]].iptr=0;
-       //       f[*p->pftable[fd]].mode=NULL;
-   }
-   f[*p->pftable[fd]].ref-=1;
-   p->pftable[fd]=0;    
-  */
 
    //Decrease reference count of file by 1
    //If ref count is 1
@@ -121,6 +113,8 @@ int fileclose(struct proc *p, struct file_info *f, int fd) {
    } else {
      ftable.valid[f->gfd] = 0;
 
+
+     //TODO if file is on disk then irelease()
    }
 
    //remove file from current process's file table

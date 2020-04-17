@@ -113,9 +113,10 @@ int sys_write(void) {
   if(argfd(0, &fd) < 0)
     return -1;
 
-
-  struct file_info f = ftable[*(myproc()->pftable[fd])];
-  //TODO: check permissions
+  struct file_info f= *(myproc()->pftable[fd]);
+  //check file permissions
+  if(f.access_permission==O_RDONLY || ftable.valid[f.gfd] == 0)
+    return -1;
 
 
   //number of bytes to write is not positive
@@ -144,9 +145,11 @@ int sys_close(void) {
     return -1;
 
   struct proc *p = myproc();
-  struct file_info f = *(p->pftable[fd]);
 
-  //TODO
+  struct file_info f = *(p->pftable[fd]);
+  //check if valid
+  if(ftable.valid[f.gfd] == 0)
+    return -1;
 
   int res = fileclose(p, &f, fd);
   return res;
@@ -164,7 +167,7 @@ int sys_fstat(void) {
   //check if given fd is valid in the global file table
   struct file_info f= *(myproc()->pftable[fd]);
   //check file permissions
-  if(f.access_permission==O_WRONLY || ftable.valid[f.gfd] == 0)
+  if(ftable.valid[f.gfd] == 0)
     return -1;
 
   //if there is an invalid address between [arg1, arg1+sizeof(fstat)]

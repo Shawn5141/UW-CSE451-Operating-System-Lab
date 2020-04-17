@@ -36,12 +36,18 @@ struct file_info{
     struct inode* iptr;
     int offset;
     int access_permission;// not sure whether it's a right type
+  int type;
+  int gfd; // global file descriptor 
 };
 
-static struct file_info ftable[NFILE];
+//static struct file_info ftable[NFILE];
+static struct{
+  struct file_info pftable[NFILE];
+  int valid[NFILE];
+}ftable;
 
 //file.c
-int fileopen(char *path, int mode);
+int fileopen(struct proc *p, char *path, int mode);
 
 int filedup(struct proc *p, struct file_info *f);
 

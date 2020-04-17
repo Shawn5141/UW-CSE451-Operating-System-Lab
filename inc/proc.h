@@ -85,11 +85,10 @@ struct proc {
   struct proc *parent;         // Parent process
   struct trap_frame *tf;       // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
-  int * pftable[NOFILE];         // array of openfile table TODO need to check
+  struct file_info *pftable[NOFILE];         // array of openfile table TODO need to check
   void *chan;                  // If non-zero, sleeping on chan
   int killed;                  // If non-zero, have been killed
   char name[16];               // Process name (debugging)
-  
 };
 
 // Process memory is laid out contiguously, low addresses first:

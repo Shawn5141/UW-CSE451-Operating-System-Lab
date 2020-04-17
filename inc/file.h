@@ -29,6 +29,7 @@ extern struct devsw devsw[];
 enum {
   CONSOLE = 1,
 };
+
 //File info struct
 struct file_info{
     int ref;//reference count

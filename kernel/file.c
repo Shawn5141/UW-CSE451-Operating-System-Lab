@@ -74,24 +74,36 @@ int filestat(struct file_info *f, struct stat *fstat) {
 }
 
 int fileclose(struct proc *p, struct file_info *f, int fd) {
-   
-   if(f[*p.pftable[fd]].ref==1){
-       f[*p.pftable[fd]].iptr=0;
-       f[*p.pftable[fd]].mode=NULL;
+  /*
+   if(f[*p->pftable[fd]].ref==1){
+       f[*p->pftable[fd]].iptr=0;
+       //       f[*p->pftable[fd]].mode=NULL;
    }
-   f[*p.pftable[fd]].ref-=1;
-   p.pftable[fd]=0;    
+   f[*p->pftable[fd]].ref-=1;
+   p->pftable[fd]=0;    
+  */
+
+   //Decrease reference count of file by 1
+   //If ref count is 1
+   if(f->ref > 1) {
+     f[*p->pftable[fd]].ref -= 1;
+   } else {
+     f[*p->pftable[fd]].iptr = 0;
+   }
+
+   //remove file from current process's file table
+   p->pftable[fd] = NULL;
+   return 0;
  
 }
 
 int fileread(struct file_info *f, char *buf, int bytes_read) {
- return concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
-
+   return concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
 }
 
 
 int filewrite(struct file_info *f, char *buf, int bytes_written) {
-
+  return concurrent_writei(f->iptr, buf, f->offset, bytes_written);
 }
 
 int filedup(struct proc *p, struct file_info *f) {

@@ -51,14 +51,16 @@ Returns the index into the process open file table as the file descriptor, or -1
  }
  int gfd =0;//global file descriptor index
   for(gfd=0;gfd<NFILE;gfd++){
-    if(ftable[gfd].iptr==NULL){//TODO Not sure how to check is empty
+    if(ftable[gfd].iptr==NULL || ftable[gfd].iptr==iptr){//TODO Not sure how to check is empty
+ //      if(ftable[gfd].iptr==iptr)cprintf("ref number %d for file %s:",ftable[gfd].ref,path);
        break;
+
     }
   }
   //Update ftable[gfd] file_info struct value 
-  ftable[gfd].ref=0;
+  ftable[gfd].ref+=1;
   ftable[gfd].iptr = iptr;
-  ftable[gfd].current_offset =0;//should it be zero?
+  //ftable[gfd].offset =0;//should it be zero?
   ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
   myproc()->pftable[pfd] = &gfd;
@@ -72,12 +74,21 @@ int filestat(struct file_info *f, struct stat *fstat) {
 }
 
 int fileclose(struct proc *p, struct file_info *f, int fd) {
-
+   
+   if(f[*p.pftable[fd]].ref==1){
+       f[*p.pftable[fd]].iptr=0;
+       f[*p.pftable[fd]].mode=NULL;
+   }
+   f[*p.pftable[fd]].ref-=1;
+   p.pftable[fd]=0;    
+ 
 }
 
 int fileread(struct file_info *f, char *buf, int bytes_read) {
+ return concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
 
 }
+
 
 int filewrite(struct file_info *f, char *buf, int bytes_written) {
 

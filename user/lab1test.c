@@ -43,7 +43,7 @@ int main() {
   sleep(100); 
   printf(stdout, "hello world\n");
   sleep(10);
-  testopen();
+  testinvalidargs();
   while (1);
 
   testopen();
@@ -96,28 +96,32 @@ void testinvalidargs(void) {
 
 
   // read
+  printf(stdout,"Start testinvalidargs\n");
   if (read(15, buf, 11) != -1)
     error("read on a non existent file descriptor");
 
+  printf(stdout,"pass first test\n");
   fd = open("console", O_WRONLY);
   assert(fd != -1);
 
+  printf(stdout,"pass second test\n");
   if (read(fd, buf, 10) != -1)
     // NOTE: If the test hangs here it's because you're trying to read from
     // stdin (hint: shouldn't happen).
     error("able to read from a write only console");
   assert(close(fd) == 0);
 
+  printf(stdout,"pass third test\n");
   fd = open("/small.txt", O_RDONLY);
 
   if ((i = read(fd, buf, -100)) != -1)
     error("negative n didn't return error, return value was '%d'", i);
-
+  printf(stdout,"pass fourth test\n");
   if (read(fd, (char *)0xffffff00, 10) != -1)
     error("able to read to a buffer not in my memory region");
 
   printf(stdout, "passed argument checking for read\n");
-
+/*
   // write
   if (write(15, buf, 11) != -1)
     error("write on a non existent file descriptor");
@@ -157,6 +161,7 @@ void testinvalidargs(void) {
     error("able to close same file twice");
 
   printf(stdout, "passed argument checking for close\n");
+*/
 }
 
 void smallfilereadtest(void) {

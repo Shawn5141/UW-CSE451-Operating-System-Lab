@@ -38,16 +38,42 @@ int sys_dup(void) {
 
 int sys_read(void) {
   // LAB1
+    /*
+ * arg0: int [file descriptor]
+ * arg1: char * [buffer to write read bytes to]
+ * arg2: int [number of bytes to read]
+ *
+ * reads up to arg2 bytes from the current position of the file descriptor 
+ * arg0 and places those bytes into arg1. The current position of the
+ * file descriptor is updated by that number of bytes.
+ *
+ * returns number of bytes read, or -1 if there was an error.
+ * If there are insufficient available bytes to complete the request,
+ * reads as many as possible before returning with that number of bytes. 
+ *
+ * Fewer than arg2 bytes can be read in various conditions:
+ * If the current position + arg2 is beyond the end of the file.
+ * If this is a pipe or console device and fewer than arg2 bytes are available 
+ * If this is a pipe and the other end of the pipe has been closed.
+ *
+ * Error conditions:
+ * arg0 is not a file descriptor open for read 
+ * some address between [arg1,arg1+arg2-1] is invalid
+ * arg2 is not positive
+ */
+
   int fd;
   char *buf;
   int bytes_read;
-
+  argint(0,&fd);
   //fd is not a file descriptor open for read
   if(argfd(0, &fd) < 0)
     return -1;
 
   struct file_info f= ftable[*(myproc()->pftable[fd])];
   //TODO: check file permissions
+  if(f.access_permission==O_WRONLY)
+    return -1;
 
 
   //Number of bytes to read is not positive
@@ -110,11 +136,12 @@ int sys_close(void) {
   // LAB1
   int fd;
 
+  argint(0,&fd);
   //fd is not an open file descriptor
+  //check if given fd is valid in global file table
   if(argfd(0, &fd) < 0)
     return -1;
 
-  //check if given fd is valid in global file table
   struct proc *p = myproc();
   struct file_info f = ftable[*(p->pftable[fd])];
 
@@ -172,10 +199,8 @@ int sys_open(void) {
 
   char *path; //path to the file 
   int mode; // mode got opening the file 
-  //struct inode *iptr;
   int fd;
 
-  //Errors: return -1
   //no available file descriptor
   //O_CREATE mode not supported for this lab 
 
@@ -189,9 +214,6 @@ int sys_open(void) {
 
   //Verify user input
   //invalid permission
-  //if(mode != O_RDONLY && mode != O_WRONLY && mode != O_RDWR)
-   // return -1;
-
 
   //call appropriate file function
   fd = fileopen(path,mode);

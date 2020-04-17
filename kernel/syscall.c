@@ -9,7 +9,7 @@
 #include <trap.h>
 #include <x86_64.h>
 #include <vspace.h>
-
+#include <file.h>
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
 // Arguments on the stack, from the user call to the C
@@ -129,8 +129,8 @@ int argstr(int n, char **pp) {
   return fetchstr(addr, pp);
 }
 // Check if file descripter is valid or not
-int argfd(int n, int*fd){
-   if(n<0 || n>NOFILE||*(fd)==NULL)// the file at that pass is not open or offbound
+int argfd(int n, int*fd_ptr){
+   if(*fd_ptr<0 || n>NOFILE||fd_ptr==NULL||ftable[*myproc()->pftable[*fd_ptr]].iptr==NULL)// the file at that pass is not open or offbound
       return -1;
    return 1; // not sure what value should return here
 }

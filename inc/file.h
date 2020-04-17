@@ -38,7 +38,7 @@ struct file_info{
     int access_permission;// not sure whether it's a right type
 };
 
-static struct file_info ftable[NFILE];
+extern struct file_info ftable[NFILE];
 
 //file.c
 int fileopen(char *path, int mode);

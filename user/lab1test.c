@@ -100,7 +100,7 @@ void testinvalidargs(void) {
   if (read(15, buf, 11) != -1)
     error("read on a non existent file descriptor");
 
-  printf(stdout,"pass first test\n");
+  //printf(stdout,"pass first test\n");
   fd = open("console", O_WRONLY);
   assert(fd != -1);
 
@@ -111,12 +111,12 @@ void testinvalidargs(void) {
     error("able to read from a write only console");
   assert(close(fd) == 0);
 
-  printf(stdout,"pass third test\n");
+  //printf(stdout,"pass third test\n");
   fd = open("/small.txt", O_RDONLY);
 
   if ((i = read(fd, buf, -100)) != -1)
     error("negative n didn't return error, return value was '%d'", i);
-  printf(stdout,"pass fourth test\n");
+  //printf(stdout,"pass fourth test\n");
   if (read(fd, (char *)0xffffff00, 10) != -1)
     error("able to read to a buffer not in my memory region");
 
@@ -152,7 +152,7 @@ void testinvalidargs(void) {
     error("able to duplicated a non open file");
 
   printf(stdout, "passed argument checking for dup\n");
-
+*/
   // close
   if (close(15) != -1)
     error("able to close non open file");
@@ -161,7 +161,7 @@ void testinvalidargs(void) {
     error("able to close same file twice");
 
   printf(stdout, "passed argument checking for close\n");
-*/
+
 }
 
 void smallfilereadtest(void) {

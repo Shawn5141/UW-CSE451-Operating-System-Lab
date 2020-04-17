@@ -16,6 +16,7 @@
 #include <spinlock.h>
 #include <stat.h>
 
+struct file_info ftable[NFILE];
 int sys_dup(void) {
   // LAB1
   int fd;
@@ -139,10 +140,12 @@ int sys_close(void) {
   argint(0,&fd);
   //fd is not an open file descriptor
   //check if given fd is valid in global file table
+
+  struct proc *p = myproc();
   if(argfd(0, &fd) < 0)
     return -1;
 
-  struct proc *p = myproc();
+//  struct proc *p = myproc();
   struct file_info f = ftable[*(p->pftable[fd])];
 
   //TODO

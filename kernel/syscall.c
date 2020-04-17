@@ -16,6 +16,7 @@
 // library system call function. The saved user %esp points
 // to a saved program counter, and then the first argument.
 
+struct file_info filetable[NOFILE];
 #define syscall_gen_fetcher(type) \
   int \
   fetch ## type(uint64_t addr, type *ip) \
@@ -130,8 +131,19 @@ int argstr(int n, char **pp) {
 }
 // Check if file descripter is valid or not
 int argfd(int n, int*fd_ptr){
-   if(*fd_ptr<0 || n>NOFILE||fd_ptr==NULL||ftable[*myproc()->pftable[*fd_ptr]].iptr==NULL)// the file at that pass is not open or offbound
+   if(*fd_ptr<0 || *fd_ptr>NOFILE){// the file at that pass is not open or offbound
+      cprintf("fd %d",*fd_ptr);
       return -1;
+   }
+   cprintf("fd %d\n",*fd_ptr);
+   struct proc* p =myproc();
+   //struct file_info f=ftable[*(p->pftable[*fd_ptr])];
+   cprintf("process file table entry point to : %d\n",ftable[*(p->pftable[*fd_ptr])].iptr);
+  // struct file_info f =ftable[*(myproc()->pftable[*fd_ptr])];
+   if(ftable[*(p->pftable[*fd_ptr])].iptr==NULL){
+      cprintf("return -1 becuase iptr is 0\n"); 
+      return -1;
+   }
    return 1; // not sure what value should return here
 }
 extern int sys_close(void);

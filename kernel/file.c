@@ -14,7 +14,7 @@
 #include <fcntl.h>
 
 struct devsw devsw[NDEV];
-//static struct file_info ftable[NFILE];
+struct file_info ftable[NFILE];
 
 int fileopen(char *path,int mode){
   /*
@@ -44,8 +44,9 @@ Returns the index into the process open file table as the file descriptor, or -1
 
 // find open slot on process open file table pftable
  int pfd = 0;//process file descriptor index
+ struct proc* p=myproc();
  for(pfd=0;pfd<NOFILE;pfd++){
-    if(myproc()->pftable[pfd]==NULL) { //TODO Not sure how to check is emtpty
+    if(p->pftable[pfd]==NULL) { //TODO Not sure how to check is emtpty
        break;
   }
  }
@@ -60,11 +61,21 @@ Returns the index into the process open file table as the file descriptor, or -1
   //Update ftable[gfd] file_info struct value 
   ftable[gfd].ref+=1;
   ftable[gfd].iptr = iptr;
+  cprintf("assign global ftable %d with pointer %d",gfd,iptr);
+  if(iptr==0)cprintf("why you are zero pointer");
   //ftable[gfd].offset =0;//should it be zero?
   ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
-  myproc()->pftable[pfd] = &gfd;
+  p->pftable[pfd] = &gfd;
   //Will always open device
+ /* for(int i=0;i<NOFILE;i++){
+    if(p->pftable[i]==NULL) { //TODO Not sure how to check is emtpty
+       cprintf("parent's file table %d  empty",i);
+    }else{
+       cprintf("parent's file table %d  full",i);
+	}
+ }*/
+
   return pfd;
 
 }

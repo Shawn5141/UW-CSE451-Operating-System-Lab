@@ -32,7 +32,6 @@ Returns the index into the process open file table as the file descriptor, or -1
     if(ftable.valid[i] == 0) {
       struct file_info newf;
       newf.ref = 1;
-      //      newf.type = ON_DISK;
       newf.iptr = iptr;
       newf.access_permission = mode;
       newf.gfd = i;
@@ -102,10 +101,13 @@ Returns the index into the process open file table as the file descriptor, or -1
 
 int filestat(struct file_info *f, struct stat *fstat) {
 
+  //populates the struct stat pointer passed in to the function
+  stati(f->iptr, fstat);
+  return 0;
 }
 
 int fileclose(struct proc *p, struct file_info *f, int fd) {
-
+  
    //Decrease reference count of file by 1
    //If ref count is 1
    if(f->ref > 1) {
@@ -119,21 +121,43 @@ int fileclose(struct proc *p, struct file_info *f, int fd) {
 
    //remove file from current process's file table
    p->pftable[fd] = NULL;
+  
    return 0;
  
 }
 
 int fileread(struct file_info *f, char *buf, int bytes_read) {
+  int res = -1;
   //Changes the offset of file_info struct
-   return concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
+   res = concurrent_readi(f->iptr,buf,ftable.pftable[f->gfd].offset,bytes_read);  
+   if(res >= 0)
+     ftable.pftable[f->gfd].offset+=res;
+
+   return res;
 }
 
 
 int filewrite(struct file_info *f, char *buf, int bytes_written) {
   //Changes the offset of file_info struct
-  return concurrent_writei(f->iptr, buf, f->offset, bytes_written);
+  //  return concurrent_writei(f->iptr, buf, f->offset, bytes_written);
+  int res = -1;
+  //Changes the offset of file_info struct
+   res = concurrent_writei(f->iptr,buf,ftable.pftable[f->gfd].offset,bytes_written);  
+   if(res >= 0)
+     ftable.pftable[f->gfd].offset+=res;
+
+   return res;
+
 }
 
 int filedup(struct proc *p, struct file_info *f) {
 
+  for(int i=0; i < NOFILE; i++) {
+    if(p->pftable[i] == NULL) {
+      p->pftable[i] = &(ftable.pftable[f->gfd]);
+      ftable.pftable[f->gfd].ref++;
+      return i;
+    }
+  }
+  return -1; // non available
 }

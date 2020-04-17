@@ -102,9 +102,8 @@ int sys_write(void) {
     return -1;
   uartputc((int)(*p));
   return 1;
-  
-
-/*
+ 
+  /*
   int fd;
   char *buf;
   int bytes_written;

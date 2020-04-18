@@ -64,10 +64,11 @@ Returns the index into the process open file table as the file descriptor, or -1
   if(iptr==0)cprintf("why you are zero pointer");
   //ftable[gfd].offset =0;//should it be zero?
   ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
+  ftable[gfd].path = path;
   //Assign pointer to pftable in slot pfd
   p->pftable[pfd] = &ftable[gfd];
 
-  cprintf("process ftable %d point to  global ftable %d ",pfd,gfd);
+  cprintf("%s open in ftable %d and point to global ftable %d with ref %d: \n",path,pfd,gfd,ftable[gfd].ref);
   return pfd;
 
 }
@@ -85,10 +86,13 @@ int fileclose(int fd) {
    //Decrease reference count of file by 1
    //If ref count is 1
    if(f.ref > 1) {
-     f.ref -= 1;
+     p->pftable[fd]->ref -= 1;
    } else {
-     f.iptr = 0;
+     cprintf("irelease ===\n\n");
+     irelease(f.iptr);
+     p->pftable[fd]->iptr = 0;
    }
+   cprintf("%s close  for fd =%d and ref is %d \n",f.path,fd,p->pftable[fd]->ref);
 
    //remove file from current process's file table
    p->pftable[fd] = NULL;
@@ -154,6 +158,7 @@ int filedup(int fd) {
     if(p->pftable[i] == NULL) {
       p->pftable[i] = p->pftable[fd]; //TODO is this setting it to the correct value?
       p->pftable[fd]->ref++;     //TODO increase reference count
+      cprintf("dup file:%s from fd = %d to new fd = %d and ref become %d \n",f.path,fd,i,p->pftable[fd]->ref);
       return i;
     }
   }

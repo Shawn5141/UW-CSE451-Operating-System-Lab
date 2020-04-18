@@ -37,6 +37,7 @@ struct file_info{
     int offset;
     int prev_offset;
     int access_permission;// not sure whether it's a right type
+    char* path;
 };
 
 //extern struct file_info ftable[NFILE];

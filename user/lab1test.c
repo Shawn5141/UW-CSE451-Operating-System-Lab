@@ -47,6 +47,7 @@ int main() {
   testopen();
   testinvalidargs();
   smallfilereadtest();
+  duptest();
   while (1);
 
   testopen();
@@ -234,6 +235,7 @@ void duptest(void) {
     error("returned fd from dup was not the smallest free fd, was '%d'", fd2);
 
   // test offsets are respected in dupped files
+  printf(stdout,"offset in fd1:%d is %d ",fd1,read(fd1,buf,10));
   assert(read(fd1, buf, 10) == 10);
   buf[10] = 0;
 

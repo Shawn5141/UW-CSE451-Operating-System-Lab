@@ -61,13 +61,13 @@ Returns the index into the process open file table as the file descriptor, or -1
   //Update ftable[gfd] file_info struct value 
   ftable[gfd].ref+=1;
   ftable[gfd].iptr = iptr;
-  cprintf("assign global ftable %d with pointer %d",gfd,iptr);
   if(iptr==0)cprintf("why you are zero pointer");
   //ftable[gfd].offset =0;//should it be zero?
   ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
-  p->pftable[pfd] = &gfd;
+  p->pftable[pfd] = &ftable[gfd];
 
+  cprintf("process ftable %d point to  global ftable %d ",pfd,gfd);
   return pfd;
 
 }
@@ -80,7 +80,7 @@ int fileclose(int fd) {
 
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
-   struct file_info f=ftable[*(p->pftable[fd])];
+   struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    //Decrease reference count of file by 1
    //If ref count is 1
@@ -97,21 +97,24 @@ int fileclose(int fd) {
 }
 
 int fileread(int fd, char *buf, int bytes_read) {
+   int res =-1;
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
-   struct file_info f=ftable[*(p->pftable[fd])];
+   struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_WRONLY)return -1;
-
-   return concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
-
+   
+   res= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
+   if(res>=0)
+       f.offset+=res;
+   return res;
 }
 
 
 int filewrite(int fd, char *buf, int bytes_written) {
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
-   struct file_info f=ftable[*(p->pftable[fd])];
+   struct file_info f=*(p->pftable[fd]);
 
   return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
 }

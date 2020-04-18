@@ -43,8 +43,9 @@ int main() {
   sleep(100); 
   printf(stdout, "hello world\n");
  // sleep(10);
- // testopen();
-  testinvalidargs();
+  testopen();
+  //testinvalidargs();
+  smallfilereadtest();
   while (1);
 
   testopen();
@@ -174,8 +175,7 @@ void smallfilereadtest(void) {
   fd = open("/small.txt", O_RDONLY);
   if (fd < 0)
     error("unable to open small file");
-
-  printf(stdout, "open small file succeeded; ok\n");
+  printf(stdout, "open small file succeeded; ok return with fd =%d\n",fd);
 
   if ((i = read(fd, buf, 10)) != 10)
     error("read of first 10 bytes unsucessful was %d bytes", i);

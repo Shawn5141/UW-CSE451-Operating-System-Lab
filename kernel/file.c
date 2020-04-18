@@ -14,8 +14,8 @@
 #include <fcntl.h>
 
 struct devsw devsw[NDEV];
-static struct file_info ftable[NFILE];
-
+struct file_info ftable[NFILE];
+int offset =0;
 int fileopen(char *path,int mode){
   /*
  *Finds an open spot in the process open file table and has it point the global open file table entry .
@@ -96,26 +96,25 @@ int fileclose(int fd) {
  
 }
 
-int fileread(int fd, char *buf, int bytes_read) {
-   int res =-1;
+int fileread(int fd, char *buf, int *bytes_read) {
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_WRONLY)return -1;
     
-   res= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
-   if(res>=0){
-       f.offset+=res;
-   }
-   cprintf("offset right now %d\n",f.offset);
-   return res;
+   offset= concurrent_readi(f.iptr,buf,f.offset,*bytes_read);  
+   
+   p->pftable[fd]->offset+=offset;
+   cprintf("offset right now %d and read %d bytes \n",p->pftable[fd]->offset,*bytes_read);
+  return offset;
 }
 
 
 int filewrite(int fd, char *buf, int bytes_written) {
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
+   
    struct file_info f=*(p->pftable[fd]);
 
   return concurrent_writei(f.iptr, buf, f.offset, bytes_written);

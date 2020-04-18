@@ -35,6 +35,7 @@ struct file_info{
     int ref;//reference count
     struct inode* iptr;
     int offset;
+    int prev_offset;
     int access_permission;// not sure whether it's a right type
 };
 

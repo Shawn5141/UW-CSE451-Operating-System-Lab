@@ -81,9 +81,9 @@ int sys_read(void) {
   if(argptr(1, &buf, bytes_read) < 0)
     return -1;
 
-  int res = fileread(fd, buf, bytes_read);
+  bytes_read=fileread(fd, buf, &bytes_read);
 
-  return res;
+  return bytes_read;
 }
 
 int sys_write(void) {

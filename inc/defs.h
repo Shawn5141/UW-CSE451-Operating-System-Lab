@@ -196,7 +196,7 @@ void syscall(void);
 //file.h
 int fileopen(char *path, int mode);
 int filedup(int fd);
-int fileread(int fd, char *buf, int bytes_read);
+int  fileread(int fd, char *buf, int* bytes_read);
 int filewrite(int fd, char *buf, int bytes_written);
 int fileclose(int fd);
 int filestat(int fd, struct stat *fstat);

@@ -21,20 +21,12 @@ int sys_dup(void) {
   // LAB1
   int fd;
 
-  if(argfd(0, &fd) < 0)
+  if(argint(0,&fd)<0 || argfd(0, &fd) < 0)
     return -1;
 
-  //check if fd is valid in global file table
-  //struct proc *p = myproc();
-
- // struct file_info f = ftable[*(p->pftable[fd])];
-
-  //TODO
-
-  int res = filedup(fd);
+  return filedup(fd);
 
 
-  return res;
 }
 
 int sys_read(void) {
@@ -81,7 +73,7 @@ int sys_read(void) {
   if(argptr(1, &buf, bytes_read) < 0)
     return -1;
 
-  bytes_read=fileread(fd, buf, &bytes_read);
+  bytes_read=fileread(fd, buf, bytes_read);
 
   return bytes_read;
 }
@@ -89,7 +81,7 @@ int sys_read(void) {
 int sys_write(void) {
   /*
   //you have to change the code in this function.
-  // Currently it supports printint one character to the screen.
+ ` // Currently it supports printint one character to the screen.
 
   int n;
   char *p;
@@ -100,34 +92,19 @@ int sys_write(void) {
   return 1;
   */
 
-
-  int fd;
-  char *buf;
   int bytes_written;
-
-  argint(0, &fd);
-
-  //if fd is not a file descriptor open for write
-  if(argfd(0, &fd) < 0)
+  char *buf;
+  int fd;
+  //argint : get file descriptor from argument 
+  //argfd : check this fd is valid (not exceeding the range)
+  //argint : get byte_written from arguemnt
+  //argptr : get char need to be written from argument and put in buf
+  //argstr : read buff and check it's positive
+  if(argint(0,&fd)<0||argfd(0,&fd)<0|| argint(2, &bytes_written) < 0|| 
+     argptr(1, &buf, bytes_written) < 0||  argstr(1,&buf)<0)
     return -1;
-
-
-  //struct file_info f = ftable[*(myproc()->pftable[fd])];
-  //TODO: check permissions
-
-
-  //number of bytes to write is not positive
-  argint(2, &bytes_written);
-  if(bytes_written < 0)
-    return -1;
-
-  //Some address between [arg1, arg1+arg2-1] is invalid
-  if(argptr(1, &buf, bytes_written) < 0)
-    return -1;
-
-  bytes_written = filewrite(fd, buf, &bytes_written);
-
-  return bytes_written;
+ // uartputc((int)(*buf));//print it out on console;
+  return  filewrite(fd, buf, bytes_written);
   
 }
 

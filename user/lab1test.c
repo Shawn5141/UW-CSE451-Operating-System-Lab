@@ -35,16 +35,17 @@ void nofilestest(void);
 
 int main() {
 
-  // if(open("console", O_RDWR) < 0){
-  //   return -1;
-  // }
-  // dup(0);     // stdout
-  // dup(0);     // stderr
+   if(open("console", O_RDWR) < 0){
+ 
+    return -1;
+   }
+  dup(0);     // stdout
+  dup(0);     // stderr
   sleep(100); 
   printf(stdout, "hello world\n");
  // sleep(10);
   testopen();
-  //testinvalidargs();
+  testinvalidargs();
   smallfilereadtest();
   while (1);
 
@@ -123,7 +124,7 @@ void testinvalidargs(void) {
     error("able to read to a buffer not in my memory region");
 
   printf(stdout, "passed argument checking for read\n");
-/*
+
   // write
   if (write(15, buf, 11) != -1)
     error("write on a non existent file descriptor");
@@ -132,7 +133,7 @@ void testinvalidargs(void) {
     error("able to write to a file in read only fs");
 
   printf(stdout, "passed argument checking for write\n");
-
+/*
   // stat
   if (fstat(15, &st) != -1)
     error("tried to fstat on a non existent file descriptor");
@@ -148,13 +149,13 @@ void testinvalidargs(void) {
   assert(st.size == 26);
 
   printf(stdout, "passed argument checking for fstat\n");
-
+*/
   // dup
   if (dup(15) != -1)
     error("able to duplicated a non open file");
 
   printf(stdout, "passed argument checking for dup\n");
-*/
+
   // close
   if (close(15) != -1)
     error("able to close non open file");

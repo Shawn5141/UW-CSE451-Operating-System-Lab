@@ -96,17 +96,17 @@ int fileclose(int fd) {
  
 }
 
-int fileread(int fd, char *buf, int *bytes_read) {
+int fileread(int fd, char *buf, int bytes_read) {
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_WRONLY)return -1;
     
-   offset= concurrent_readi(f.iptr,buf,f.offset,*bytes_read);  
+   offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
    
    p->pftable[fd]->offset+=offset;
-   cprintf("offset right now %d and read %d bytes \n",p->pftable[fd]->offset,*bytes_read);
+   cprintf("offset right now %d and read %d bytes \n",p->pftable[fd]->offset,bytes_read);
   return offset;
 }
 
@@ -118,7 +118,10 @@ int filewrite(int fd, char *buf, int bytes_written) { //int *bytes_written
    
    struct file_info f=*(p->pftable[fd]);
 
-  return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
+   if(f.iptr==NULL)return -1;
+   if(f.access_permission==O_RDONLY)return -1;
+   
+   return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
   
   /*
   struct proc* p = myproc();
@@ -142,12 +145,15 @@ int filewrite(int fd, char *buf, int bytes_written) { //int *bytes_written
 }
 
 int filedup(int fd) {
-  struct proc* p = myproc();
+   struct proc* p = myproc();
+   if(p->pftable[fd]==NULL)return -1;
+   struct file_info f=*(p->pftable[fd]);
+   if(f.iptr==NULL)return -1;
 
   for(int i = 0; i < NOFILE; i++) {
     if(p->pftable[i] == NULL) {
-      p->pftable[i] = &(ftable[fd]); //TODO is this setting it to the correct value?
-      //      ftable->pftable[fd].ref++; //TODO increase reference count
+      p->pftable[i] = p->pftable[fd]; //TODO is this setting it to the correct value?
+      p->pftable[fd]->ref++;     //TODO increase reference count
       return i;
     }
   }

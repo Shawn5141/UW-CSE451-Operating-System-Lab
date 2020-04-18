@@ -73,7 +73,14 @@ Returns the index into the process open file table as the file descriptor, or -1
 }
 
 int filestat(int fd,struct stat *fstat) {
+  struct proc* p = myproc();
+  // not valid 
+  if(p->pftable[fd] == NULL)
     return -1;
+
+  struct file_info f = *(p->pftable[fd]);
+  stati(f.iptr, fstat);
+  return 0;
 }
 
 int fileclose(int fd) {

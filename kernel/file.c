@@ -80,7 +80,9 @@ int filestat(int fd,struct stat *fstat) {
     return -1;
 
   struct file_info f = *(p->pftable[fd]);
-  stati(f.iptr, fstat);
+  if(f.iptr==NULL)return -1;
+
+  concurrent_stati(f.iptr, fstat);
   return 0;
 }
 

@@ -129,9 +129,9 @@ int sys_fstat(void) {
   // LAB1
   int fd;
   struct stat *fstat;
-
+  
   //fd is not an open file descriptor
-  if(argfd(0, &fd) < 0)
+  if(argint(0,&fd)||argfd(0, &fd) < 0)
     return -1;
 
   //check if given fd is valid in the global file table

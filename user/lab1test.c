@@ -136,7 +136,7 @@ void testinvalidargs(void) {
   printf(stdout, "passed argument checking for write\n");
 
   // stat
- /* if (fstat(15, &st) != -1)
+  if (fstat(15, &st) != -1)
     error("tried to fstat on a non existent file descriptor");
 
   if (fstat(stdout, &st) != 0) error("couldn't fstat on stdout");
@@ -150,7 +150,7 @@ void testinvalidargs(void) {
   assert(st.size == 26);
 
   printf(stdout, "passed argument checking for fstat\n");
-*/
+
   // dup
   if (dup(15) != -1)
     error("able to duplicated a non open file");

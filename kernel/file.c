@@ -111,15 +111,45 @@ int fileread(int fd, char *buf, int *bytes_read) {
 }
 
 
-int filewrite(int fd, char *buf, int bytes_written) {
+int filewrite(int fd, char *buf, int bytes_written) { //int *bytes_written
+  
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
    
    struct file_info f=*(p->pftable[fd]);
 
   return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
+  
+  /*
+  struct proc* p = myproc();
+  if(p->pftable[fd] == NULL) 
+    return -1;
+
+  struct file_info f = *(p->pftable[fd]);
+  if(f.iptr == NULL)
+    return -1;
+
+  if(f.access_permission == O_RDONLY)
+    return -1;
+
+  offset = concurrent_writei(f.iptr, buf, f.offset, *bytes_written);
+
+  p->pftable[fd]->offset += offset;
+
+  return offset;
+  */
+
 }
 
 int filedup(int fd) {
-return -1;
+  struct proc* p = myproc();
+
+  for(int i = 0; i < NOFILE; i++) {
+    if(p->pftable[i] == NULL) {
+      p->pftable[i] = &(ftable[fd]); //TODO is this setting it to the correct value?
+      //      ftable->pftable[fd].ref++; //TODO increase reference count
+      return i;
+    }
+  }
+  return -1; //not available
 }

@@ -87,6 +87,7 @@ int sys_read(void) {
 }
 
 int sys_write(void) {
+  /*
   //you have to change the code in this function.
   // Currently it supports printint one character to the screen.
 
@@ -97,19 +98,21 @@ int sys_write(void) {
     return -1;
   uartputc((int)(*p));
   return 1;
-  
+  */
 
-/*
+
   int fd;
   char *buf;
   int bytes_written;
+
+  argint(0, &fd);
 
   //if fd is not a file descriptor open for write
   if(argfd(0, &fd) < 0)
     return -1;
 
 
-  struct file_info f = ftable[*(myproc()->pftable[fd])];
+  //struct file_info f = ftable[*(myproc()->pftable[fd])];
   //TODO: check permissions
 
 
@@ -119,13 +122,13 @@ int sys_write(void) {
     return -1;
 
   //Some address between [arg1, arg1+arg2-1] is invalid
-  if(argptr(1, &buf, bytes_written) < 0 || argstr(1, &buf) < 0)
+  if(argptr(1, &buf, bytes_written) < 0)
     return -1;
 
-  int res = filewrite(&f, buf, bytes_written);
+  bytes_written = filewrite(fd, buf, &bytes_written);
 
-  return res;
-  */
+  return bytes_written;
+  
 }
 
 int sys_close(void) {

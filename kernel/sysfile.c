@@ -26,7 +26,6 @@ int sys_dup(void) {
 
   return filedup(fd);
 
-
 }
 
 int sys_read(void) {
@@ -142,8 +141,7 @@ int sys_fstat(void) {
   if(argptr(1, (char**)(&fstat), sizeof(fstat)) == -1)
     return -1;
 
-  int res = filestat(fd, fstat);
-  return res;
+  return filestat(fd, fstat);
 }
 
 int sys_open(void) {

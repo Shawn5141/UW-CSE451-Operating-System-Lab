@@ -103,10 +103,12 @@ int fileread(int fd, char *buf, int bytes_read) {
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_WRONLY)return -1;
-   
+    
    res= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
-   if(res>=0)
+   if(res>=0){
        f.offset+=res;
+   }
+   cprintf("offset right now %d\n",f.offset);
    return res;
 }
 

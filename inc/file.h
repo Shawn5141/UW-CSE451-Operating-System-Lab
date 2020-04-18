@@ -38,17 +38,17 @@ struct file_info{
     int access_permission;// not sure whether it's a right type
 };
 
-extern struct file_info ftable[NFILE];
+//extern struct file_info ftable[NFILE];
 
 //file.c
-int fileopen(char *path, int mode);
+//int fileopen(char *path, int mode);
 
-int filedup(struct proc *p, struct file_info *f);
+//int filedup(struct proc *p, struct file_info *f);
 
-int fileread(struct file_info *f, char *buf, int bytes_read);
+//int fileread(struct file_info *f, char *buf, int bytes_read);
 
-int filewrite(struct file_info *f, char *buf, int bytes_written);
+//int filewrite(struct file_info *f, char *buf, int bytes_written);
 
-int fileclose(struct proc *p, struct file_info *f, int fd);
+//int fileclose(struct proc *p, struct file_info *f, int fd);
 
-int filestat(struct file_info *f, struct stat *fstat);
+//int filestat(struct file_info *f, struct stat *fstat);

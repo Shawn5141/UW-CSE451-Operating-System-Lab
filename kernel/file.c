@@ -14,7 +14,7 @@
 #include <fcntl.h>
 
 struct devsw devsw[NDEV];
-struct file_info ftable[NFILE];
+static struct file_info ftable[NFILE];
 
 int fileopen(char *path,int mode){
   /*
@@ -67,39 +67,27 @@ Returns the index into the process open file table as the file descriptor, or -1
   ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
   //Assign pointer to pftable in slot pfd
   p->pftable[pfd] = &gfd;
-  //Will always open device
- /* for(int i=0;i<NOFILE;i++){
-    if(p->pftable[i]==NULL) { //TODO Not sure how to check is emtpty
-       cprintf("parent's file table %d  empty",i);
-    }else{
-       cprintf("parent's file table %d  full",i);
-	}
- }*/
 
   return pfd;
 
 }
 
-int filestat(struct file_info *f, struct stat *fstat) {
-
+int filestat(int fd,struct stat *fstat) {
+    return -1;
 }
 
-int fileclose(struct proc *p, struct file_info *f, int fd) {
-  /*
-   if(f[*p->pftable[fd]].ref==1){
-       f[*p->pftable[fd]].iptr=0;
-       //       f[*p->pftable[fd]].mode=NULL;
-   }
-   f[*p->pftable[fd]].ref-=1;
-   p->pftable[fd]=0;    
-  */
+int fileclose(int fd) {
 
+   struct proc* p =myproc();
+   if(p->pftable[fd]==NULL)return -1;
+   struct file_info f=ftable[*(p->pftable[fd])];
+   if(f.iptr==NULL)return -1;
    //Decrease reference count of file by 1
    //If ref count is 1
-   if(f->ref > 1) {
-     f[*p->pftable[fd]].ref -= 1;
+   if(f.ref > 1) {
+     f.ref -= 1;
    } else {
-     f[*p->pftable[fd]].iptr = 0;
+     f.iptr = 0;
    }
 
    //remove file from current process's file table
@@ -108,15 +96,26 @@ int fileclose(struct proc *p, struct file_info *f, int fd) {
  
 }
 
-int fileread(struct file_info *f, char *buf, int bytes_read) {
-   return concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
+int fileread(int fd, char *buf, int bytes_read) {
+   struct proc* p =myproc();
+   if(p->pftable[fd]==NULL)return -1;
+   struct file_info f=ftable[*(p->pftable[fd])];
+   if(f.iptr==NULL)return -1;
+   if(f.access_permission==O_WRONLY)return -1;
+
+   return concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
+
 }
 
 
-int filewrite(struct file_info *f, char *buf, int bytes_written) {
-  return concurrent_writei(f->iptr, buf, f->offset, bytes_written);
+int filewrite(int fd, char *buf, int bytes_written) {
+   struct proc* p =myproc();
+   if(p->pftable[fd]==NULL)return -1;
+   struct file_info f=ftable[*(p->pftable[fd])];
+
+  return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
 }
 
-int filedup(struct proc *p, struct file_info *f) {
-
+int filedup(int fd) {
+return -1;
 }

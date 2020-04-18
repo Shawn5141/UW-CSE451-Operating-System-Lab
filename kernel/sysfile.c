@@ -25,13 +25,13 @@ int sys_dup(void) {
     return -1;
 
   //check if fd is valid in global file table
-  struct proc *p = myproc();
+  //struct proc *p = myproc();
 
-  struct file_info f = ftable[*(p->pftable[fd])];
+ // struct file_info f = ftable[*(p->pftable[fd])];
 
   //TODO
 
-  int res = filedup(p, &f);
+  int res = filedup(fd);
 
 
   return res;
@@ -71,11 +71,6 @@ int sys_read(void) {
   if(argfd(0, &fd) < 0)
     return -1;
 
-  struct file_info f= ftable[*(myproc()->pftable[fd])];
-  //TODO: check file permissions
-  if(f.access_permission==O_WRONLY)
-    return -1;
-
 
   //Number of bytes to read is not positive
   argint(2, &bytes_read);
@@ -86,7 +81,7 @@ int sys_read(void) {
   if(argptr(1, &buf, bytes_read) < 0)
     return -1;
 
-  int res = fileread(&f, buf, bytes_read);
+  int res = fileread(fd, buf, bytes_read);
 
   return res;
 }
@@ -141,16 +136,13 @@ int sys_close(void) {
   //fd is not an open file descriptor
   //check if given fd is valid in global file table
 
-  struct proc *p = myproc();
   if(argfd(0, &fd) < 0)
     return -1;
 
-//  struct proc *p = myproc();
-  struct file_info f = ftable[*(p->pftable[fd])];
 
   //TODO
 
-  int res = fileclose(p, &f, fd);
+  int res = fileclose( fd);
   return res;
 }
 
@@ -164,14 +156,13 @@ int sys_fstat(void) {
     return -1;
 
   //check if given fd is valid in the global file table
-  struct file_info f = ftable[*(myproc()->pftable[fd])];
   //TODO
 
   //if there is an invalid address between [arg1, arg1+sizeof(fstat)]
   if(argptr(1, (char**)(&fstat), sizeof(fstat)) == -1)
     return -1;
 
-  int res = filestat(&f, fstat);
+  int res = filestat(fd, fstat);
   return res;
 }
 

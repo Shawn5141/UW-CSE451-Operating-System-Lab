@@ -42,7 +42,8 @@ int main() {
   // dup(0);     // stderr
   sleep(100); 
   printf(stdout, "hello world\n");
-  sleep(10);
+ // sleep(10);
+ // testopen();
   testinvalidargs();
   while (1);
 

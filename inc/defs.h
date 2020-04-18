@@ -193,6 +193,14 @@ int fetchstr(uint64_t, char **);
 int argfd(int,int*);
 void syscall(void);
 
+//file.h
+int fileopen(char *path, int mode);
+int filedup(int fd);
+int fileread(int fd, char *buf, int bytes_read);
+int filewrite(int fd, char *buf, int bytes_written);
+int fileclose(int fd);
+int filestat(int fd, struct stat *fstat);
+
 // trap.c
 void idtinit(void);
 extern uint ticks;

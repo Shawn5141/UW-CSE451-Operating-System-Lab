@@ -134,9 +134,9 @@ void testinvalidargs(void) {
     error("able to write to a file in read only fs");
 
   printf(stdout, "passed argument checking for write\n");
-/*
+
   // stat
-  if (fstat(15, &st) != -1)
+ /* if (fstat(15, &st) != -1)
     error("tried to fstat on a non existent file descriptor");
 
   if (fstat(stdout, &st) != 0) error("couldn't fstat on stdout");

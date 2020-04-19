@@ -29,23 +29,6 @@ Returns the index into the process open file table as the file descriptor, or -1
 
 
 
-int foundSlot = 0;
- int i =0;//global file descriptor index
-  for(i=0;i<NFILE;i++){
-    if(ftable[i].ref == 0) { // check if slot is empty
-      foundSlot = 1;
-           break;
-
-    }
-  }
-
-  if(foundSlot == 0){
-    cprintf("NO MORE SLOTS\n");
-    return -1;
-  }
-
-
-
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
 
 
@@ -62,9 +45,6 @@ int foundSlot = 0;
   
   */
 
-
-
-
 if(iptr->type==1){ //TODO need to double check whehter it will return -1 if inode is directory //number can refer to stat.h in inc
        unlocki(iptr);
        return -1;
@@ -72,13 +52,21 @@ if(iptr->type==1){ //TODO need to double check whehter it will return -1 if inod
   if(iptr->type==2 && mode!=O_RDONLY)
       return -1;
 
+
+  int foundSlot = 0;
 // find open slot on process open file table pftable
  int pfd = 0;//process file descriptor index
  struct proc* p=myproc();
  for(pfd=0;pfd<NOFILE;pfd++){
     if(p->pftable[pfd]==NULL) { //TODO Not sure how to check is emtpty
+      foundSlot = 1;
        break;
   }
+ }
+
+ if(foundSlot == 0) {
+   cprintf("THERE ARE NO MORE OPEN SLOTS IN PROCESS FILE TABLE\n");
+   return -1;
  }
 
 
@@ -86,7 +74,7 @@ if(iptr->type==1){ //TODO need to double check whehter it will return -1 if inod
   for(gfd=0;gfd<NFILE;gfd++){
     if(ftable[gfd].ref == 0) { // check if slot is empty
       //    if(ftable[gfd].iptr==NULL || ftable[gfd].iptr==iptr){
-      cprintf("ENTERED THIS BRANCH... FOUND OPEN SLOT\n");      
+
       //Update ftable[gfd] file_info struct value 
       ftable[gfd].ref+=1;
       ftable[gfd].iptr = iptr;

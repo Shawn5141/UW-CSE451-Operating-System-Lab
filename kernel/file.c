@@ -27,7 +27,7 @@ Returns the index into the process open file table as the file descriptor, or -1
  * 
  */
 
-
+  //assert(mode == O_RDONLY);
 
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
 
@@ -45,12 +45,19 @@ Returns the index into the process open file table as the file descriptor, or -1
   
   */
 
-if(iptr->type==1){ //TODO need to double check whehter it will return -1 if inode is directory //number can refer to stat.h in inc
+if(iptr->type==T_DIR){ //TODO need to double check whehter it will return -1 if inode is directory //number can refer to stat.h in inc
        unlocki(iptr);
        return -1;
   }
-  if(iptr->type==2 && mode!=O_RDONLY)
+
+// trying to open a file that is not read only
+  if(iptr->type==T_FILE && mode!=O_RDONLY)
       return -1;
+
+  if(mode == O_WRONLY)
+    return -1;
+  //if(mode == O_RDWR)
+  // return -1;
 
 
   int foundSlot = 0;

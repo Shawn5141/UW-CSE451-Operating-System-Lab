@@ -1,3 +1,4 @@
+Name : Jazmine Redmond / Shawn Hsiao
 Part 1:
 
 1. Line 22 prints the CPU info. Line 24 prints the physical memory table
@@ -13,8 +14,13 @@ The user printf only prints to a given file descriptor. The kernel printf prints
 
 
 Part 4:
+5. 
+call trap
 
-5.
+6. 
+728 bytes
+
+7.
 Use gdb where function, when reach sys_sleep, these function are triggered first.
 
 sleep (chan=0xffffffff8012ae00 <ticks>, lk=0xffffffff80129d80 <tickslock>)
@@ -25,4 +31,6 @@ sleep (chan=0xffffffff8012ae00 <ticks>, lk=0xffffffff80129d80 <tickslock>)
 #4  0xffffffff801058e2 in alltraps () at kernel/trapasm.S:20
 
 
-
+8. 
+Jazmine Redmond: 15-20 hrs
+Shawn Hsiao: 20-25 hrs 

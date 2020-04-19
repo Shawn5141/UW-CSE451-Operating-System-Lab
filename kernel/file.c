@@ -99,7 +99,13 @@ int fileclose(int fd) {
    } else {
      cprintf("irelease ===\n\n");
      irelease(f.iptr);
+    // reset everyting
      p->pftable[fd]->iptr = 0;
+     p->pftable[fd]->ref = 0;
+     p->pftable[fd]->path = 0;
+     p->pftable[fd]->access_permission = 0;
+     p->pftable[fd]->offset=0;
+    
    }
    cprintf("%s close  for fd =%d and ref is %d \n",f.path,fd,p->pftable[fd]->ref);
 
@@ -115,11 +121,11 @@ int fileread(int fd, char *buf, int bytes_read) {
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_WRONLY)return -1;
-    
+    // TODO need to change offset to ftable's struct in order to avoid multi tread issue
    offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
    
    p->pftable[fd]->offset+=offset;
-   cprintf("offset right now %d and read %d bytes \n",p->pftable[fd]->offset,bytes_read);
+   cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
   return offset;
 }
 

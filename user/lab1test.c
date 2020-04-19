@@ -41,10 +41,10 @@ int main() {
    }
   dup(0);     // stdout
   dup(0);     // stderr
-  sleep(100); 
-  printf(stdout, "hello world\n");
+ // sleep(100); 
+ // printf(stdout, "hello world\n");
  // sleep(10);
-  testopen();
+  //testopen();
   testinvalidargs();
   smallfilereadtest();
   duptest();
@@ -64,7 +64,7 @@ int main() {
 
 void testopen(void) {
   int fd, fd2;
-
+  printf(stdout,"\ntest open\n");
   // test invalid open arguments.
   if (open("/other.txt", O_CREATE) != -1)
     error("created file in read only file system");
@@ -100,7 +100,7 @@ void testinvalidargs(void) {
 
 
   // read
-  printf(stdout,"Start testinvalidargs\n");
+  printf(stdout,"\nStart testinvalidargs\n");
   if (read(15, buf, 11) != -1)
     error("read on a non existent file descriptor");
 
@@ -172,7 +172,7 @@ void smallfilereadtest(void) {
   int fd, i;
   char buf[11];
 
-  printf(stdout, "small file test\n");
+  printf(stdout, "\nsmall file test\n");
   // Test read only funcionality
   fd = open("/small.txt", O_RDONLY);
   if (fd < 0)
@@ -225,7 +225,7 @@ void duptest(void) {
   int fd1, fd2, stdout_cpy;
   char buf[100];
 
-  printf(stdout, "dup test\n");
+  printf(stdout, "\ndup test\n");
   // Test read only funcionality
   fd1 = open("/small.txt", O_RDONLY);
   if (fd1 < 0)
@@ -235,7 +235,7 @@ void duptest(void) {
     error("returned fd from dup was not the smallest free fd, was '%d'", fd2);
 
   // test offsets are respected in dupped files
-  printf(stdout,"offset in fd1:%d is %d ",fd1,read(fd1,buf,10));
+
   assert(read(fd1, buf, 10) == 10);
   buf[10] = 0;
 

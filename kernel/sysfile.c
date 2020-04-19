@@ -57,7 +57,6 @@ int sys_read(void) {
   int fd;
   char *buf;
   int bytes_read;
-  argint(0,&fd);
   //fd is not a file descriptor open for read
   if(argint(0,&fd)<0||argfd(0, &fd) < 0)
     return -1;

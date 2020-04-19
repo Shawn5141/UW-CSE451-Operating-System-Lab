@@ -48,6 +48,7 @@ int main() {
   testinvalidargs();
   smallfilereadtest();
   duptest();
+  nofilestest();
   while (1);
 
   testopen();

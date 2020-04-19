@@ -59,7 +59,7 @@ int sys_read(void) {
   int bytes_read;
   argint(0,&fd);
   //fd is not a file descriptor open for read
-  if(argfd(0, &fd) < 0)
+  if(argint(0,&fd)<0||argfd(0, &fd) < 0)
     return -1;
 
 

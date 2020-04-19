@@ -178,13 +178,9 @@ int sys_open(void) {
   if(argstr(0, &path) < 0 || argint(1, &mode) < 0)
     return -1;
 
-
   //invalid or unmapped address or file dne 
   if(mode == O_CREATE) 
     return -1;
-
-  //Verify user input
-  //invalid permission
 
   //call appropriate file function
   fd = fileopen(path,mode);

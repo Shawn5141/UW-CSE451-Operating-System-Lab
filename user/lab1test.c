@@ -35,8 +35,7 @@ void nofilestest(void);
 
 int main() {
 
-   if(open("console", O_RDWR) < 0){
- 
+   if(open("console", O_RDWR) < 0){ 
     return -1;
    }
   dup(0);     // stdout
@@ -44,12 +43,14 @@ int main() {
  // sleep(100); 
   printf(stdout, "hello world\n");
  // sleep(10);
-    testopen();
+  /*  
+  testopen();
   testinvalidargs();
   smallfilereadtest();
   duptest();
   nofilestest();
-  while (1);
+  //  while (1);
+  */
 
   testopen();
   testinvalidargs();
@@ -105,7 +106,7 @@ void testinvalidargs(void) {
   if (read(15, buf, 11) != -1)
     error("read on a non existent file descriptor");
 
-  //printf(stdout,"pass first test\n");
+  printf(stdout,"pass first test\n");
   fd = open("console", O_WRONLY);
   assert(fd != -1);
 
@@ -116,12 +117,12 @@ void testinvalidargs(void) {
     error("able to read from a write only console");
   assert(close(fd) == 0);
 
-  //printf(stdout,"pass third test\n");
+  printf(stdout,"pass third test\n");
   fd = open("/small.txt", O_RDONLY);
 
   if ((i = read(fd, buf, -100)) != -1)
     error("negative n didn't return error, return value was '%d'", i);
-  //printf(stdout,"pass fourth test\n");
+  printf(stdout,"pass fourth test\n");
   if (read(fd, (char *)0xffffff00, 10) != -1)
     error("able to read to a buffer not in my memory region");
 

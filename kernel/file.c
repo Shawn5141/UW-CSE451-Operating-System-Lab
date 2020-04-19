@@ -16,6 +16,7 @@
 struct devsw devsw[NDEV];
 struct file_info ftable[NFILE];
 int offset =0;
+
 int fileopen(char *path,int mode){
   /*
  *Finds an open spot in the process open file table and has it point the global open file table entry .
@@ -27,13 +28,7 @@ Returns the index into the process open file table as the file descriptor, or -1
  * 
  */
 
-  //assert(mode == O_RDONLY);
-
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
-
-
-  //not sure what this code does?
-  /*
   
   //need to allocate emtpy stat
   struct stat *istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
@@ -43,9 +38,8 @@ Returns the index into the process open file table as the file descriptor, or -1
     return -1;
   concurrent_stati(iptr,istat);
   
-  */
 
-if(iptr->type==T_DIR){ //TODO need to double check whehter it will return -1 if inode is directory //number can refer to stat.h in inc
+  if(iptr->type==T_DIR){ 
        unlocki(iptr);
        return -1;
   }
@@ -53,12 +47,6 @@ if(iptr->type==T_DIR){ //TODO need to double check whehter it will return -1 if 
 // trying to open a file that is not read only
   if(iptr->type==T_FILE && mode!=O_RDONLY)
       return -1;
-
-  if(mode == O_WRONLY)
-    return -1;
-  //if(mode == O_RDWR)
-  // return -1;
-
 
   int foundSlot = 0;
 // find open slot on process open file table pftable
@@ -72,7 +60,7 @@ if(iptr->type==T_DIR){ //TODO need to double check whehter it will return -1 if 
  }
 
  if(foundSlot == 0) {
-   cprintf("THERE ARE NO MORE OPEN SLOTS IN PROCESS FILE TABLE\n");
+   //   cprintf("THERE ARE NO MORE OPEN SLOTS IN PROCESS FILE TABLE\n");
    return -1;
  }
 
@@ -80,8 +68,7 @@ if(iptr->type==T_DIR){ //TODO need to double check whehter it will return -1 if 
  int gfd =0;//global file descriptor index
   for(gfd=0;gfd<NFILE;gfd++){
     if(ftable[gfd].ref == 0) { // check if slot is empty
-      //    if(ftable[gfd].iptr==NULL || ftable[gfd].iptr==iptr){
-
+     
       //Update ftable[gfd] file_info struct value 
       ftable[gfd].ref+=1;
       ftable[gfd].iptr = iptr;
@@ -93,15 +80,13 @@ if(iptr->type==T_DIR){ //TODO need to double check whehter it will return -1 if 
 
       //Assign pointer to pftable in slot pfd
       p->pftable[pfd] = &ftable[gfd];
-
-          break;
+      break;
 
     }
   }
 
 
-
-  cprintf("%s open in ftable %d and point to global ftable %d with ref %d: \n",path,pfd,gfd,ftable[gfd].ref);
+  //  cprintf("%s open in ftable %d and point to global ftable %d with ref %d: \n",path,pfd,gfd,ftable[gfd].ref);
   return pfd;
 
 }
@@ -130,7 +115,7 @@ int fileclose(int fd) {
    if(f.ref > 1) {
      p->pftable[fd]->ref -= 1;
    } else {
-     cprintf("irelease ===\n\n");
+     // cprintf("irelease ===\n\n");
      irelease(f.iptr);
     // reset everyting
      p->pftable[fd]->iptr = 0;
@@ -140,7 +125,7 @@ int fileclose(int fd) {
      p->pftable[fd]->offset=0;
     
    }
-   cprintf("%s close  for fd =%d and ref is %d \n",f.path,fd,p->pftable[fd]->ref);
+   //   cprintf("%s close  for fd =%d and ref is %d \n",f.path,fd,p->pftable[fd]->ref);
 
    //remove file from current process's file table
    p->pftable[fd] = NULL;
@@ -158,12 +143,12 @@ int fileread(int fd, char *buf, int bytes_read) {
    offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
    
    p->pftable[fd]->offset+=offset;
-   cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
+   //cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
   return offset;
 }
 
 
-int filewrite(int fd, char *buf, int bytes_written) { //int *bytes_written
+int filewrite(int fd, char *buf, int bytes_written) { 
   
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
@@ -174,25 +159,6 @@ int filewrite(int fd, char *buf, int bytes_written) { //int *bytes_written
    if(f.access_permission==O_RDONLY)return -1;
    
    return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
-  
-  /*
-  struct proc* p = myproc();
-  if(p->pftable[fd] == NULL) 
-    return -1;
-
-  struct file_info f = *(p->pftable[fd]);
-  if(f.iptr == NULL)
-    return -1;
-
-  if(f.access_permission == O_RDONLY)
-    return -1;
-
-  offset = concurrent_writei(f.iptr, buf, f.offset, *bytes_written);
-
-  p->pftable[fd]->offset += offset;
-
-  return offset;
-  */
 
 }
 
@@ -204,9 +170,9 @@ int filedup(int fd) {
 
   for(int i = 0; i < NOFILE; i++) {
     if(p->pftable[i] == NULL) {
-      p->pftable[i] = p->pftable[fd]; //TODO is this setting it to the correct value?
-      p->pftable[fd]->ref++;     //TODO increase reference count
-      cprintf("dup file:%s from fd = %d to new fd = %d and ref become %d \n",f.path,fd,i,p->pftable[fd]->ref);
+      p->pftable[i] = p->pftable[fd]; 
+      p->pftable[fd]->ref++;     //increase reference count
+      //cprintf("dup file:%s from fd = %d to new fd = %d and ref become %d \n",f.path,fd,i,p->pftable[fd]->ref);
       return i;
     }
   }

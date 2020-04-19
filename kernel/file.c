@@ -116,6 +116,7 @@ int filestat(struct file_info *f, struct stat *fstat) {
 }
 
 int fileclose(struct proc *p, struct file_info *f, int fd) {
+<<<<<<< HEAD
   
    //Decrease reference count of file by 1
    //If ref count is 1
@@ -132,10 +133,20 @@ int fileclose(struct proc *p, struct file_info *f, int fd) {
    p->pftable[fd] = NULL;
   
    return 0;
+=======
+   
+   if(f[*p.pftable[fd]].ref==1){
+       f[*p.pftable[fd]].iptr=0;
+       f[*p.pftable[fd]].mode=NULL;
+   }
+   f[*p.pftable[fd]].ref-=1;
+   p.pftable[fd]=0;    
+>>>>>>> parent of ca18138... working on close
  
 }
 
 int fileread(struct file_info *f, char *buf, int bytes_read) {
+<<<<<<< HEAD
   int res = -1;
   //Changes the offset of file_info struct
    res = concurrent_readi(f->iptr,buf,ftable.pftable[f->gfd].offset,bytes_read);  
@@ -143,10 +154,15 @@ int fileread(struct file_info *f, char *buf, int bytes_read) {
      ftable.pftable[f->gfd].offset+=res;
 
    return res;
+=======
+ return concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
+
+>>>>>>> parent of ca18138... working on close
 }
 
 
 int filewrite(struct file_info *f, char *buf, int bytes_written) {
+<<<<<<< HEAD
   //Changes the offset of file_info struct
   //  return concurrent_writei(f->iptr, buf, f->offset, bytes_written);
   int res = -1;
@@ -156,6 +172,8 @@ int filewrite(struct file_info *f, char *buf, int bytes_written) {
      ftable.pftable[f->gfd].offset+=res;
 
    return res;
+=======
+>>>>>>> parent of ca18138... working on close
 
 }
 

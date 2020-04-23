@@ -44,7 +44,7 @@ If you are part of a team, then only one person should create the repo and perfo
 team member should directly pull the newly created repo.
 ```
 $ git clone git@gitlab.cs.washington.edu:<uwid>/<proj_name>.git
-$ git remote add upstream git@gitlab.cs.washington.edu:xk-public/19au.git
+$ git remote add upstream git@gitlab.cs.washington.edu:xk-public/20sp.git
 ```
 Before you start coding, add a git tag
 ```

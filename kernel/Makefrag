@@ -68,7 +68,7 @@ LDFLAGS_KERNEL   := -m elf_x86_64 -nodefaultlibs --oformat elf64-x86-64
 GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 QEMUGDB := -gdb tcp::$(GDBPORT)
 
-$(O)/initcode : kernel/initcode.S user/lab1test.c $(ULIB)
+$(O)/initcode : kernel/initcode.S user/lab2test.c $(ULIB)
 	$(CC) -g -nostdinc -I inc -c kernel/initcode.S -o $(O)/initcode.o
 	$(CC) -g -ffreestanding -MD -MP -mno-sse -I inc -c user/lab1test.c -o $(O)/lab1test.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(O)/initcode.out $(O)/initcode.o $(O)/lab1test.o $(ULIB)

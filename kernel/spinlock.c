@@ -25,6 +25,7 @@ void acquire(struct spinlock *lk) {
     panic("acquire");
 
   // The xchg is atomic.
+  // what is xchg function and is locked==1 locked or not locked
   while (xchg(&lk->locked, 1) != 0)
     ;
 

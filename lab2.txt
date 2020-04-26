@@ -1,0 +1,18 @@
+Student: Shawn Hsiao
+Student: Jazmine Redmond
+
+Question #1
+Describe the relationship between scheduler, sched, swtch in kernel/proc.c.
+
+
+Question #2
+Describe why the child process is able to return to user-level application where fork is called.
+
+
+Question #3
+How does process kill work in xk? What is its relationship with exit?
+
+
+Question #4
+For each member of the project team, how many hours did you
+spend on this lab?

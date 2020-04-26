@@ -70,6 +70,7 @@ Returns the index into the process open file table as the file descriptor, or -1
     if(ftable[gfd].ref == 0) { // check if slot is empty
      
       //Update ftable[gfd] file_info struct value 
+      //Lab2 : Probably need to add some lock here
       ftable[gfd].ref+=1;
       ftable[gfd].iptr = iptr;
 
@@ -83,7 +84,7 @@ Returns the index into the process open file table as the file descriptor, or -1
       break;
 
     }
-  }
+ }
 
 
   //  cprintf("%s open in ftable %d and point to global ftable %d with ref %d: \n",path,pfd,gfd,ftable[gfd].ref);

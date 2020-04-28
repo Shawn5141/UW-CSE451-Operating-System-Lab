@@ -1,19 +1,22 @@
 # Lab 2 Design Doc: Multiprocessing
 
 ## Overview
-/* Some instruction from spec about overview
-For each section, again, start with a few sentences describing goals. "Done"
+The goal  of this lab is to add multiprocessing to xk. This will be done using classic 
+UNIX system calls. This lab will also implement basic interprocess communication through pipes.
+
+//Notes
 Also, we need to write some description above following topics:
-How the	different parts	of the design interact together.
+How the	 different parts    of the design interact together.
   - Major data structures. "Not done for each fn"
   - Synchronization.       "Not done for each fn"
   - Major algorithms.      "Not done for each fn"
   - Major data structures. "Not done for each fn"
-*/
-//Most of description is from lab2.md. "Modified if needed." 
 
-  - Synchronization issues.  "Not done"
-          Not sure why lock is better to use (either spinlock / sleeplock /or sleep ).
+
+### Major Parts
+  - Synchronization issues: Code from lab 1 should be modified to support
+    system calls called concurrently. Locks on all critical sections.
+          Not sure why lock is better to use (either spinlock / sleeplock /or sleep ). //Fix this line
 
   - fork: Duplicate a current process to childern process with same open file descriptor.
    
@@ -23,22 +26,20 @@ How the	different parts	of the design interact together.
           A child is returned from wait only once.
 
   - exit: Return the allocated memory back to the kernel heap
-    
-  - pipes: Creates a pipe and two open file descriptors. The file descriptors
-           are written to the array at arg0, with arg0[0] the read end of the 
-           pipe and arg0[1] as the write end of the pipe.
 
   - exec:  Given a pathname for an executable file, sys_exec() runs that file 
            in the context of the current process (e.g., with the same open file 
            descriptors). arg1 is an array of strings; arg1[0] is the name of the 
            file; arg1[1] is the first argument; arg1[n] is '\0' signalling the
            end of the arguments.
-
+  
+  - pipes: Creates a pipe and two open file descriptors. The file descriptors
+           are written to the array at arg0, with arg0[0] the read end of the 
+           pipe and arg0[1] as the write end of the pipe.
+ 
 
 ## In-depth Analysis and Implementation
-
--
-  - Synchronization issues  "Not done"
+//Notes
 	(1) functions you need to implement
 
 	(2) functions you need to modify
@@ -50,7 +51,14 @@ How the	different parts	of the design interact together.
 	(5) which file will be modified
 
 
-*Example* 
+### Synchronization issues 
+- Place locks around critical sections
+- global file table will use a spinlock
+- acquire lock before any file function called
+- release lock 
+- Create new spinlock on every allocated `pipe`
+
+//Example 
 ### fork: 
 - A new entry in the process table must be created via `allocproc`
 - User memory must be duplicated via `vspacecopy`
@@ -59,19 +67,28 @@ How the	different parts	of the design interact together.
 - Set the state of the new process to be `RUNNABLE`
 - Return 0 in the child, while returning the child s pid in the parent
     
-### wait: "Not done"
-     
-	(1) functions you need to implement.
-	(2) functions you need to modify.
-	(3) corner cases .
-	(4) test plan.
-	(5) which file will be modified.
+### wait:
+- Scan through table looking for exited children 
+- Suspend execution until a child calls `exit` or is killed 
+- Return pid of child process or -1 if this process has no children
 
-### exit: "Not done"
+### exit:
+- Mark the process as a `ZOMBIE` 
+- Close all opened files within process via `syscall_close`
+- Wake up parent or init process 
+- Reclaims resources consumed by progam via `vspacefree` //Is this correct here?
+- Does not return
+
+### exec:
+- Run the given file in the context of the current process
+- overwrite current user's virtual address space 
+- Read program and load it via `vspaceloadcode`
+- Create deep copy of arguments from old address space to new one via `vscpacewriteova`
+- Does not return on success. Returns -1 on error
 
 ### pipes: "Not done"
 
-	- functions you need to implement:
+    - functions you need to implement:
   
             pipe_open(int fd1,int fd2): create two files descriptor in process file tablepointing to a pipe in global file info struct.
             pipe_write(int fd,char* buf, int offset): acquire a lock and write to pipe,  then release lock. Spin or sleep if pipe buffer is full.
@@ -93,12 +110,26 @@ How the	different parts	of the design interact together.
         - file will be modified: .
              file.h, file.c
    
-### exec: "Not done"
 
 ## Risk Analysis "Not done"
+
+### Unanswered Questions
 (1) write down everything you have not figured out yet
+- When to acquire locks for parent/child process? 
+
+### Staging of Work
+(3) few sentences on how we plan to stage the work so that if our estimated 
+turn out to be closer to the worst case, we will be able 
+to jettison some lower priority features. 
+
+### Time Estimation
 (2) estimate average hours of implementation
     - best scenario
     - worst scenario
-(3) few sentences on how we plan to stage the work so that if our estimated turn out to be closer to the worst case, we will be able to jettison some lower priority features. 
 
+- Synchronization issues:
+- sys_fork:
+- sys_exit:
+- sys_wait:
+- sys_pipe:
+- sys_exec:

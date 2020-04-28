@@ -59,7 +59,7 @@ How the	different parts	of the design interact together.
 - Set the state of the new process to be `RUNNABLE`
 - Return 0 in the child, while returning the child s pid in the parent
     
-   - wait: "Not done"
+### wait: "Not done"
      
 	(1) functions you need to implement.
 	(2) functions you need to modify.
@@ -67,28 +67,33 @@ How the	different parts	of the design interact together.
 	(4) test plan.
 	(5) which file will be modified.
 
-   - exit: "Not done"
+### exit: "Not done"
 
-   - pipes: "Not done"
+### pipes: "Not done"
 
-	(1) functions you need to implement:.
+	- functions you need to implement:
+  
             pipe_open(int fd1,int fd2): create two files descriptor in process file tablepointing to a pipe in global file info struct.
             pipe_write(int fd,char* buf, int offset): acquire a lock and write to pipe,  then release lock. Spin or sleep if pipe buffer is full.
             pipe_read(int fd,char* buf,int offset): acquire a lock and read from pipe, then release this lock. Spin or sleep if pipe is empty. 
-        (2) functions you need to modiy:.
+        
+        - functions you need to modiy:
             file_info strcut in file.h: add boolean type isPipe flag.
             file_read() in file.c: if isPipe is true, use pipe_read function, otherwise use Lab1 file_read function.
             file_write() in file.c: if isPipe is true, use pipe_write function, otherwise use Lab1 file_write function.
-        (3) corner cases:.
+        
+        - corner cases:.
             Empty and full state need to be handled. Will use circular buffer to determine whether it is full or empty. (If read is chased by write, then full. On the other hand, if write is chased by read, it is empty state)
-        (4) test plan:.
+        
+        - test plan:.
              a. Transferring the data.
              b. Full state and empty state.
              c. Race competition
-        (5) file will be modified: .
+        
+        - file will be modified: .
              file.h, file.c
    
-   - exec: "Not done"
+### exec: "Not done"
 
 ## Risk Analysis "Not done"
 (1) write down everything you have not figured out yet

@@ -8,6 +8,7 @@ UNIX system calls. This lab will also implement basic interprocess communication
 ### Major Parts
   - Synchronization issues: Code from lab 1 should be modified to support
     system calls called concurrently. Locks on all critical sections.
+          Not sure why lock is better to use (either spinlock / sleeplock /or sleep ). //Fix this line
 
   - fork: Duplicate a current process to childern process with same open file descriptor.
    
@@ -55,7 +56,7 @@ UNIX system calls. This lab will also implement basic interprocess communication
 - Mark the process as a `ZOMBIE` 
 - Close all opened files within process via `syscall_close`
 - Wake up parent or init process 
-- Reclaims resources consumed by progam via `vspacefree`
+- Reclaims resources consumed by progam via `vspacefree` //Is this correct here?
 - Does not return
 
 ### exec:
@@ -87,14 +88,13 @@ UNIX system calls. This lab will also implement basic interprocess communication
 ## Risk Analysis
 
 ### Unanswered Questions
+(1) write down everything you have not figured out yet
 - When to acquire locks for parent/child process? 
 - Not sure when is a good timing clean up child's memoery.
-
 ### Staging of Work
-Start this lab by ensuring the previous methods implemnented in lab 1 can run concurrently. 
-
-It is crucial the `exec` function to work so the next lab can run smoothly. 
-
+(3) few sentences on how we plan to stage the work so that if our estimated 
+turn out to be closer to the worst case, we will be able 
+to jettison some lower priority features. 
 
 ### Time Estimation
 (2) estimate average hours of implementation

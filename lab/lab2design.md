@@ -90,7 +90,7 @@ UNIX system calls. This lab will also implement basic interprocess communication
 ### Unanswered Questions
 (1) write down everything you have not figured out yet
 - When to acquire locks for parent/child process? 
-
+- Not sure when is a good timing clean up child's memoery.
 ### Staging of Work
 (3) few sentences on how we plan to stage the work so that if our estimated 
 turn out to be closer to the worst case, we will be able 

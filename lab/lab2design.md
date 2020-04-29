@@ -51,12 +51,16 @@ UNIX system calls. This lab will also implement basic interprocess communication
 - Suspend execution until a child calls `exit` or is killed 
 - Return pid of child process or -1 if this process has no children
 
+
+
 ### exit:
-- Mark the process as a `ZOMBIE` 
+- If parent is not existing, mark the process as a `ZOMBIE` 
 - Close all opened files within process via `syscall_close`
 - Wake up parent or init process 
 - Reclaims resources consumed by progam via `vspacefree`
 - Does not return
+
+
 
 ### exec:
 - Run the given file in the context of the current process
@@ -88,7 +92,10 @@ UNIX system calls. This lab will also implement basic interprocess communication
 
 ### Unanswered Questions
 - When to acquire locks for parent/child process? 
-- Not sure when is a good timing clean up child's memoery.
+- Not sure when is a good timing clean up child's memoery. Should it be in wait function or right before exit function.
+- Read and write offset for pipe, should we put another entry in file info struct for both read offset and write offset?
+- How can a process become a zombie? Which function determines.
+- What exact mechanism for circular pipe. How to determine empty and full need to be clarified. 
 
 ### Staging of Work
 Start this lab by ensuring the previous methods implemnented in lab 1 can run concurrently. 
@@ -101,9 +108,9 @@ It is crucial the `exec` function to work so the next lab can run smoothly.
     - best scenario
     - worst scenario
 
-- Synchronization issues:
-- sys_fork:
-- sys_exit:
-- sys_wait:
-- sys_pipe:
-- sys_exec:
+- Synchronization issues: 5 hrs
+- sys_fork: 7 hrs
+- sys_exit: 7 hrs
+- sys_wait: 7 hrs
+- sys_pipe: 7 hrs
+- sys_exec: 7 hrs

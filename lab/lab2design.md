@@ -4,14 +4,6 @@
 The goal  of this lab is to add multiprocessing to xk. This will be done using classic 
 UNIX system calls. This lab will also implement basic interprocess communication through pipes.
 
-//Notes
-Also, we need to write some description above following topics:
-How the	 different parts    of the design interact together.
-  - Major data structures. "Not done for each fn"
-  - Synchronization.       "Not done for each fn"
-  - Major algorithms.      "Not done for each fn"
-  - Major data structures. "Not done for each fn"
-
 
 ### Major Parts
   - Synchronization issues: Code from lab 1 should be modified to support
@@ -39,17 +31,6 @@ How the	 different parts    of the design interact together.
  
 
 ## In-depth Analysis and Implementation
-//Notes
-	(1) functions you need to implement
-
-	(2) functions you need to modify
-
-	(3) corner cases 
-
-	(4) test plan
-
-	(5) which file will be modified
-
 
 ### Synchronization issues 
 - Place locks around critical sections
@@ -58,7 +39,6 @@ How the	 different parts    of the design interact together.
 - release lock 
 - Create new spinlock on every allocated `pipe`
 
-//Example 
 ### fork: 
 - A new entry in the process table must be created via `allocproc`
 - User memory must be duplicated via `vspacecopy`
@@ -86,32 +66,26 @@ How the	 different parts    of the design interact together.
 - Create deep copy of arguments from old address space to new one via `vscpacewriteova`
 - Does not return on success. Returns -1 on error
 
-### pipes: "Not done"
-
-    - functions you need to implement:
-  
-            pipe_open(int fd1,int fd2): create two files descriptor in process file tablepointing to a pipe in global file info struct.
-            pipe_write(int fd,char* buf, int offset): acquire a lock and write to pipe,  then release lock. Spin or sleep if pipe buffer is full.
-            pipe_read(int fd,char* buf,int offset): acquire a lock and read from pipe, then release this lock. Spin or sleep if pipe is empty. 
-        
-        - functions you need to modiy:
-            file_info strcut in file.h: add boolean type isPipe flag.
-            file_read() in file.c: if isPipe is true, use pipe_read function, otherwise use Lab1 file_read function.
-            file_write() in file.c: if isPipe is true, use pipe_write function, otherwise use Lab1 file_write function.
-        
-        - corner cases:.
-            Empty and full state need to be handled. Will use circular buffer to determine whether it is full or empty. (If read is chased by write, then full. On the other hand, if write is chased by read, it is empty state)
-        
-        - test plan:.
-             a. Transferring the data.
-             b. Full state and empty state.
-             c. Race competition
-        
-        - file will be modified: .
-             file.h, file.c
+### pipes:
+- pipe_open(int fd1,int fd2): create two files descriptor in process file tablepointing to a pipe in global file info struct.
+- pipe_write(int fd,char* buf, int offset): acquire a lock and write to pipe,  then release lock. Spin or sleep if pipe buffer is full.
+- pipe_read(int fd,char* buf,int offset): acquire a lock and read from pipe, then release this lock. Spin or sleep if pipe is empty.       
+-functions you need to modiy:
+     (1) file_info strcut in file.h: add boolean type isPipe flag.
+     (2) file_read() in file.c: if isPipe is true, use pipe_read function, otherwise use Lab1 file_read function.
+     (3) file_write() in file.c: if isPipe is true, use pipe_write function, otherwise use Lab1 file_write function.
+- corner cases:.
+     (1) Empty and full state need to be handled. Will use circular buffer to determine whether it is full or empty. (If read is chased by write, then full. On the other hand, if write is chased by read, it is empty state)
+- test plan:.
+     (1) Transferring the data.
+     (2) Full state and empty state.
+     (3) Race competition
+- file will be modified: .
+     (1) file.h. 
+     (2) file.c
    
 
-## Risk Analysis "Not done"
+## Risk Analysis
 
 ### Unanswered Questions
 (1) write down everything you have not figured out yet

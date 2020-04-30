@@ -12,10 +12,14 @@
 #include <stat.h>
 #include <proc.h>
 #include <fcntl.h>
-
+//Lab1 design
 struct devsw devsw[NDEV];
 struct file_info ftable[NFILE];
 int offset =0;
+
+//lab2 design
+struct spinlock lock;
+
 
 int fileopen(char *path,int mode){
   /*
@@ -66,26 +70,23 @@ Returns the index into the process open file table as the file descriptor, or -1
 
 
  int gfd =0;//global file descriptor index
+  //Lab2 design
   for(gfd=0;gfd<NFILE;gfd++){
     if(ftable[gfd].ref == 0) { // check if slot is empty
      
-      //Update ftable[gfd] file_info struct value 
-      //Lab2 : Probably need to add some lock here
+      acquire(&lock);
       ftable[gfd].ref+=1;
       ftable[gfd].iptr = iptr;
-
-      if(iptr==0)cprintf("why you are zero pointer");
-      //ftable[gfd].offset =0;//should it be zero?
       ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
       ftable[gfd].path = path;
-
       //Assign pointer to pftable in slot pfd
       p->pftable[pfd] = &ftable[gfd];
+      //Lab2 design
+      release(&lock);
       break;
 
     }
  }
-
 
   //  cprintf("%s open in ftable %d and point to global ftable %d with ref %d: \n",path,pfd,gfd,ftable[gfd].ref);
   return pfd;
@@ -100,8 +101,9 @@ int filestat(int fd,struct stat *fstat) {
 
   struct file_info f = *(p->pftable[fd]);
   if(f.iptr==NULL)return -1;
-
+  acquire(&lock);//Not sure if I need to do it over here
   concurrent_stati(f.iptr, fstat);
+  release(&lock);
   return 0;
 }
 
@@ -111,6 +113,8 @@ int fileclose(int fd) {
    if(p->pftable[fd]==NULL)return -1;
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
+    
+    acquire(&lock);
    //Decrease reference count of file by 1
    //If ref count is 1
    if(f.ref > 1) {
@@ -128,6 +132,7 @@ int fileclose(int fd) {
    }
    //   cprintf("%s close  for fd =%d and ref is %d \n",f.path,fd,p->pftable[fd]->ref);
 
+   release(&lock);
    //remove file from current process's file table
    p->pftable[fd] = NULL;
    return 0;
@@ -143,8 +148,10 @@ int fileread(int fd, char *buf, int bytes_read) {
     // TODO need to change offset to ftable's struct in order to avoid multi tread issue
    offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
    
+   acquire(&lock);
    p->pftable[fd]->offset+=offset;
    //cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
+   release(&lock);
   return offset;
 }
 
@@ -168,12 +175,13 @@ int filedup(int fd) {
    if(p->pftable[fd]==NULL)return -1;
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
-
   for(int i = 0; i < NOFILE; i++) {
     if(p->pftable[i] == NULL) {
+      acquire(&lock);
       p->pftable[i] = p->pftable[fd]; 
       p->pftable[fd]->ref++;     //increase reference count
       //cprintf("dup file:%s from fd = %d to new fd = %d and ref become %d \n",f.path,fd,i,p->pftable[fd]->ref);
+      release(&lock);
       return i;
     }
   }

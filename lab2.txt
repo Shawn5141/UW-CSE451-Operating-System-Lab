@@ -3,6 +3,7 @@ Student: Jazmine Redmond
 
 Question #1
 Describe the relationship between scheduler, sched, swtch in kernel/proc.c.
+swtch is inside scheduler function to switch from process to process
 
 
 Question #2

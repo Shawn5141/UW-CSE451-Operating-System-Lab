@@ -20,7 +20,6 @@ struct {
 } ptable;
 
 static struct proc *initproc;
-
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -121,6 +120,18 @@ void userinit(void) {
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
 int fork(void) {
+
+   // A new entry in the process table must be created via `allocproc`
+   struct proc *p;
+   p=allocproc(); 
+   // User memory must be duplicated via `vspacecopy`
+   vspacecopy(&myproc()->vspace,&p->vspace);
+// The trapframe must be duplicated in the new process
+
+// All the opened files must be duplicated in the new process (not as simple as a memory copy)
+
+// Set the state of the new process to be `RUNNABLE`
+
   // your code here
   return 0;
 }

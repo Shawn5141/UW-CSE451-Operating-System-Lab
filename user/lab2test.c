@@ -76,7 +76,9 @@ void forktest(void) {
   int nproc = 6;
 
   printf(1, "forktest\n");
-
+  int test_pid=fork();
+  printf(1,"test_pid =%d",test_pid);
+  return;
   for (n = 0; n < nproc; n++) {
     pid = fork();
     if (pid < 0)

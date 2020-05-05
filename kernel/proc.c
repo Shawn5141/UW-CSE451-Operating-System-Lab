@@ -124,8 +124,10 @@ int fork(void) {
    // A new entry in the process table must be created via `allocproc`
    struct proc *p;
    p=allocproc(); 
+   assertm(vspaceinit(&p->vspace) == 0, "error initializing process's virtual address descriptor");
    // User memory must be duplicated via `vspacecopy`
-   vspacecopy(&myproc()->vspace,&p->vspace);
+   vspacecopy(&p->vspace,&myproc()->vspace);
+
 // The trapframe must be duplicated in the new process
    memcmp ( &p->tf,myproc()->tf, sizeof(*p->tf));     
    p->tf->rax =0;
@@ -133,10 +135,11 @@ int fork(void) {
 // All the opened files must be duplicated in the new process (not as simple as a memory copy)
    filecopy(p,myproc());
 // Set the state of the new process to be `RUNNABLE`
-  acquire(&ptable.lock);
-  p->state = RUNNABLE;
-  release(&ptable.lock);   
+  //acquire(&ptable.lock);
+  //p->state = RUNNABLE;
+  //release(&ptable.lock);   
   // your code here
+  
   return 0;
 }
 

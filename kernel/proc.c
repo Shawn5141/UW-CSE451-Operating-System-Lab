@@ -124,23 +124,41 @@ int fork(void) {
    // A new entry in the process table must be created via `allocproc`
    struct proc *p;
    p=allocproc(); 
+   if(p == 0) return -1;
+
    assertm(vspaceinit(&p->vspace) == 0, "error initializing process's virtual address descriptor");
    // User memory must be duplicated via `vspacecopy`
    vspacecopy(&p->vspace,&myproc()->vspace);
 
 // The trapframe must be duplicated in the new process
+/*
    memcmp ( &p->tf,myproc()->tf, sizeof(*p->tf));     
    p->tf->rax =0;
    myproc()->tf->rax=p->pid;
 // All the opened files must be duplicated in the new process (not as simple as a memory copy)
-   filecopy(p,myproc());
+//   filecopy(p,myproc());
+*/
+   //copy parent trap frame to child
+   memmove(p->tf, myproc()->tf, sizeof(*p->tf)); //sizeof trapframe struct?
+   //copy parent proc file table and update ref count
+   for (int i=0; i < NOFILE; i++) {
+     acquire(&ptable.lock);
+     if(myproc()->pftable[i] != NULL) {
+       p->pftable[i] = &(*(myproc()->pftable[i]));
+       p->pftable[i]->ref++;
+     }
+     release(&ptable.lock);
+   }
+
 // Set the state of the new process to be `RUNNABLE`
-  //acquire(&ptable.lock);
-  //p->state = RUNNABLE;
-  //release(&ptable.lock);   
+  acquire(&ptable.lock);
+  p->state = RUNNABLE;
+  p->tf->rax = 0;
+  p->parent = myproc(); //set the parent 
+  release(&ptable.lock);   
   // your code here
   
-  return 0;
+  return p->pid;
 }
 
 // Exit the current process.  Does not return.
@@ -173,6 +191,26 @@ void exit(void) {
 int wait(void) {
   // your code here
   // Scan through table looking for exited children.
+  int hasActiveChildren = 0;
+  for(int i=0; i<NPROC; i++) {
+    acquire(&ptable.lock);
+
+    if(ptable.proc[i].parent == myproc() && ptable.proc[i].state != UNUSED) {
+      hasActiveChildren = 1;
+    }
+    release(&ptable.lock);
+
+  }
+
+  if(!hasActiveChildren) return -1; //no children 
+
+  //Look for zombie child
+  struct proc *zombie;
+  //TODO 
+  for(int i=0; i< NPROC; i++) {
+
+  }
+
   return -1;
 }
 

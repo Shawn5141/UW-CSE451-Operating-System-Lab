@@ -187,3 +187,14 @@ int filedup(int fd) {
   }
   return -1; //not available
 }
+void filecopy(struct proc* parent,struct proc* child){
+    for(int i=0;i<NOFILE;i++){
+      if(parent->pftable[i]!=NULL){
+         acquire(&lock);
+         child->pftable[i]=parent->pftable[i];
+         child->pftable[i]->ref++;
+         release(&lock);
+      }
+    }
+
+}

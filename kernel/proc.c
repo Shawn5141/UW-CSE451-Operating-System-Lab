@@ -145,6 +145,24 @@ int fork(void) {
 // until its parent calls wait() to find out it exited.
 void exit(void) {
   // your code here
+  
+  //close all files open in process
+  for(int i=0; i < NOFILE; i++) {
+    if(myproc()->pftable[i] != NULL) {
+      fileclose(i);
+    }
+  }
+
+  acquire(&ptable.lock);
+  //TODO ADD CODE HERE
+  //
+
+  wakeup1(myproc()->parent); //wake up parent
+  myproc()->state = ZOMBIE; // set child to zombie - regardless of parent status. Should no longer run 
+ //do not try to free vspace - cleanup in wait()
+  sched(); // because lock then changed process state
+  release(&ptable.lock);
+
 }
 
 // Wait for a child process to exit and return its pid.

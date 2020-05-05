@@ -198,3 +198,9 @@ void filecopy(struct proc* parent,struct proc* child){
     }
 
 }
+
+
+int pipe(int *fds) {
+
+
+}

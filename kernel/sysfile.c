@@ -141,5 +141,19 @@ int sys_exec(void) {
 
 int sys_pipe(void) {
   // LAB2
-  return -1;
+  int *pipe_fds; //pointer to an array of two file descriptors
+
+  //Create a pipe and two open file descriptors
+  //arg[0] = read end of pipe
+  //arg[1] = write end of pipe  
+  
+  if(arptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0)
+    return -1;
+
+  //  acquire(&ftable.lock);
+  int res = pipe(pipe_fds);
+  //release(&ftable.lock);
+
+
+  return res;
 }

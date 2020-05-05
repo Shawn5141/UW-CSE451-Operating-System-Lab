@@ -40,6 +40,16 @@ struct file_info{
     char* path;
 };
 
+
+struct pipe {
+  int read_fd;
+  int write_fd;
+  int head;
+  int tail;
+  char buf[2048];
+
+};
+
 //extern struct file_info ftable[NFILE];
 
 //file.c

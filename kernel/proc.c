@@ -166,7 +166,7 @@ int fork(void) {
 // until its parent calls wait() to find out it exited.
 void exit(void) {
   // your code here
-  
+ //cprintf("\n\n====  exit calleed =======\n\n\n"); 
   //close all files open in process
   for(int i=0; i < NOFILE; i++) {
     if(myproc()->pftable[i] != NULL) {
@@ -174,6 +174,7 @@ void exit(void) {
     }
   }
 
+  acquire(&ptable.lock);
   for(int i = 0; i < NPROC; i++) {
     if (ptable.proc[i].parent->pid == myproc()->pid) {
       ptable.proc[i].parent = initproc;
@@ -195,8 +196,7 @@ int wait(void) {
   // your code here
   // Scan through table looking for exited children.
   int hasActiveChildren = 0;
-  int tmp=0;
-  cprintf("NPROC =%d, PID =%d  lock =%d  \n",NPROC,myproc()->pid,ptable.lock);
+  //cprintf("NPROC =%d, PID =%d  lock =%d  \n",NPROC,myproc()->pid,ptable.lock);
   for(int i=0; i<NPROC; i++) {
     acquire(&ptable.lock);
 
@@ -204,9 +204,8 @@ int wait(void) {
       hasActiveChildren = 1;
     }
     release(&ptable.lock);
-    tmp=i;
   }
-  cprintf("PID %d ,leave for loop when i= %d has active child %d \n",myproc()->pid,tmp,hasActiveChildren);
+  //cprintf("PID %d ,leave for loop when i= %d has active child %d \n",myproc()->pid,tmp,hasActiveChildren);
   if(!hasActiveChildren) return -1; //no children 
 
   //Look for zombie child
@@ -228,7 +227,7 @@ int wait(void) {
            return child_pid;
          }
       }
-    cprintf("pid =%d call sleep on itself\n",myproc()->pid);
+    //cprintf("pid =%d call sleep on itself\n",myproc()->pid);
     sleep(myproc(),&ptable.lock);
   }
   
@@ -356,7 +355,6 @@ void sleep(void *chan, struct spinlock *lk) {
   myproc()->chan = chan;
   myproc()->state = SLEEPING;
   //TODO
-  cprintf("about to sched");
   sched();
 
   // Tidy up.
@@ -377,7 +375,7 @@ static void wakeup1(void *chan) {
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
-      cprintf("p->state =runnalble for PID %d",p->pid);
+  //    cprintf("p->state =runnalble for PID %d",p->pid);
     }
 }
 

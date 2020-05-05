@@ -174,10 +174,13 @@ void exit(void) {
     }
   }
 
-  acquire(&ptable.lock);
-  //TODO ADD CODE HERE
-  //
-
+  for(int i = 0; i < NPROC; i++) {
+    if (ptable.proc[i].parent->pid == myproc()->pid) {
+      ptable.proc[i].parent = initproc;
+      if (initproc->state == SLEEPING)
+        wakeup1(initproc);
+    }
+  }
   wakeup1(myproc()->parent); //wake up parent
   myproc()->state = ZOMBIE; // set child to zombie - regardless of parent status. Should no longer run 
  //do not try to free vspace - cleanup in wait()
@@ -192,6 +195,8 @@ int wait(void) {
   // your code here
   // Scan through table looking for exited children.
   int hasActiveChildren = 0;
+  int tmp=0;
+  cprintf("NPROC =%d, PID =%d  lock =%d  \n",NPROC,myproc()->pid,ptable.lock);
   for(int i=0; i<NPROC; i++) {
     acquire(&ptable.lock);
 
@@ -199,17 +204,34 @@ int wait(void) {
       hasActiveChildren = 1;
     }
     release(&ptable.lock);
-
+    tmp=i;
   }
-
+  cprintf("PID %d ,leave for loop when i= %d has active child %d \n",myproc()->pid,tmp,hasActiveChildren);
   if(!hasActiveChildren) return -1; //no children 
 
   //Look for zombie child
-  struct proc *zombie;
+ // struct bool zombieFound=false;
   //TODO 
-  for(int i=0; i< NPROC; i++) {
-
+  acquire(&ptable.lock);
+  while(true){
+    for(int i=0; i< NPROC; i++) {
+       if(ptable.proc[i].parent ==myproc() && ptable.proc[i].state==ZOMBIE){
+           int child_pid =ptable.proc[i].pid;
+           ptable.proc[i].state = UNUSED;
+           vspacefree(&ptable.proc[i].vspace);
+           kfree(ptable.proc[i].kstack);
+           ptable.proc[i].kstack = 0;
+           ptable.proc[i].parent = 0;
+           ptable.proc[i].pid = 0;
+           ptable.proc[i].killed = 0;
+           release(&ptable.lock);
+           return child_pid;
+         }
+      }
+    cprintf("pid =%d call sleep on itself\n",myproc()->pid);
+    sleep(myproc(),&ptable.lock);
   }
+  
 
   return -1;
 }
@@ -228,6 +250,7 @@ void scheduler(void) {
     // Enable interrupts on this processor.
     sti();
 
+    //cprintf("In for loop ");
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
@@ -261,8 +284,11 @@ void scheduler(void) {
 void sched(void) {
   int intena;
 
-  if (!holding(&ptable.lock))
+  //cprintf("PID %d lock->locked =%d, mycpu %d lock cpu %d holding %d \n",myproc()->pid,&ptable.lock.locked,mycpu(),!holding(&ptable.lock));
+  if (!holding(&ptable.lock)){
+    cprintf("before panic %d", !holding(&ptable.lock));
     panic("sched ptable.lock");
+ }
   if (mycpu()->ncli != 1) {
     cprintf("pid : %d\n", myproc()->pid);
     cprintf("ncli : %d\n", mycpu()->ncli);
@@ -329,6 +355,8 @@ void sleep(void *chan, struct spinlock *lk) {
   // Go to sleep.
   myproc()->chan = chan;
   myproc()->state = SLEEPING;
+  //TODO
+  cprintf("about to sched");
   sched();
 
   // Tidy up.
@@ -347,8 +375,10 @@ static void wakeup1(void *chan) {
   struct proc *p;
 
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if (p->state == SLEEPING && p->chan == chan)
+    if (p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+      cprintf("p->state =runnalble for PID %d",p->pid);
+    }
 }
 
 // Wake up all processes sleeping on chan.

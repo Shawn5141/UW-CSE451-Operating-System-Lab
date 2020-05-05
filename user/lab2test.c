@@ -76,9 +76,6 @@ void forktest(void) {
   int nproc = 6;
 
   printf(1, "forktest\n");
-  int test_pid=fork();
-  printf(1,"test_pid =%d",test_pid);
-  return;
   for (n = 0; n < nproc; n++) {
     pid = fork();
     if (pid < 0)
@@ -88,17 +85,17 @@ void forktest(void) {
       error("forktest: exit failed to destroy this process");
     }
   }
-
+  printf(1,"pass part1 \n");
   if (n != nproc) {
     error("forktest: fork claimed to work %d times! but only %d\n", nproc, n);
   }
-
+  printf(1,"pass part2 \n");
   for (; n > 0; n--) {
     if (wait() < 0) {
       error("forktest: wait stopped early\n");
     }
   }
-
+  printf(1,"pass part3 \n");
   if (wait() != -1) {
     error("forktest: wait got too many\n");
   }

@@ -3,15 +3,25 @@ Student: Jazmine Redmond
 
 Question #1
 Describe the relationship between scheduler, sched, swtch in kernel/proc.c.
-swtch is inside scheduler function to switch from process to process
+
+Scheduler loops through and finds a process to run, then it calls swtch to give control to that process. When the process needs to return control to the scheduler it calls sched. Then this cycle repeats 
+
+Each CPU has a separate scheduler that manages the scheduling routine including picking which process to run, running it, and returning control to the scheduler. 
+Sched saves and retores intena then calls swtch to return control to scheduler. 
+Swtch is inside the scheduler function and switches from process to process. 
 
 
 Question #2
 Describe why the child process is able to return to user-level application where fork is called.
 
+Fork copies the parent's file descriptor table along with its memory. This way the child starts with exactly the same open files as the parent and is able to return to the user level application.
+
 
 Question #3
 How does process kill work in xk? What is its relationship with exit?
+
+exit allows a process to terminate itself, kill lets one process request that another be terminated.
+Kill indirectly calls exit. Kill sets the victim's p->killed and if wakes it up if it's sleeping. Eventually the victim wil enter/leave the kernel at which point code in trap will call exit if p->killed is set. 
 
 
 Question #4

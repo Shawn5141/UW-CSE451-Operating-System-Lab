@@ -131,13 +131,6 @@ int fork(void) {
    vspacecopy(&p->vspace,&myproc()->vspace);
 
 // The trapframe must be duplicated in the new process
-/*
-   memcmp ( &p->tf,myproc()->tf, sizeof(*p->tf));     
-   p->tf->rax =0;
-   myproc()->tf->rax=p->pid;
-// All the opened files must be duplicated in the new process (not as simple as a memory copy)
-//   filecopy(p,myproc());
-*/
    //copy parent trap frame to child
    memmove(p->tf, myproc()->tf, sizeof(*p->tf)); //sizeof trapframe struct?
    //copy parent proc file table and update ref count
@@ -174,6 +167,7 @@ void exit(void) {
     }
   }
 
+  //set init to parent process if necessary 
   acquire(&ptable.lock);
   for(int i = 0; i < NPROC; i++) {
     if (ptable.proc[i].parent->pid == myproc()->pid) {
@@ -208,9 +202,7 @@ int wait(void) {
   //cprintf("PID %d ,leave for loop when i= %d has active child %d \n",myproc()->pid,tmp,hasActiveChildren);
   if(!hasActiveChildren) return -1; //no children 
 
-  //Look for zombie child
- // struct bool zombieFound=false;
-  //TODO 
+  //Look for zombie child - do reaping 
   acquire(&ptable.lock);
   while(true){
     for(int i=0; i< NPROC; i++) {
@@ -228,7 +220,7 @@ int wait(void) {
          }
       }
     //cprintf("pid =%d call sleep on itself\n",myproc()->pid);
-    sleep(myproc(),&ptable.lock);
+    sleep(myproc(),&ptable.lock); //suspend execution
   }
   
 

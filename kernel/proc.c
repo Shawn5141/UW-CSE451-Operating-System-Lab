@@ -127,7 +127,7 @@ int fork(void) {
    // User memory must be duplicated via `vspacecopy`
    vspacecopy(&myproc()->vspace,&p->vspace);
 // The trapframe must be duplicated in the new process
-   memcpy ( &p->tf,myproc()->tf, sizeof(*p->tf));     
+   memcmp ( &p->tf,myproc()->tf, sizeof(*p->tf));     
    p->tf->rax =0;
    myproc()->tf->rax=p->pid;
 // All the opened files must be duplicated in the new process (not as simple as a memory copy)

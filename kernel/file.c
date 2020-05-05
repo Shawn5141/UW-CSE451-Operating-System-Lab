@@ -101,9 +101,9 @@ int filestat(int fd,struct stat *fstat) {
 
   struct file_info f = *(p->pftable[fd]);
   if(f.iptr==NULL)return -1;
-  acquire(&lock);//Not sure if I need to do it over here
+  //acquire(&lock);//Not sure if I need to do it over here
   concurrent_stati(f.iptr, fstat);
-  release(&lock);
+  //release(&lock);
   return 0;
 }
 

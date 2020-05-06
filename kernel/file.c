@@ -145,15 +145,22 @@ int fileread(int fd, char *buf, int bytes_read) {
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_WRONLY)return -1;
-    // TODO need to change offset to ftable's struct in order to avoid multi tread issue
-   offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
    
-   acquire(&lock);
-   p->pftable[fd]->offset+=offset;
+   if(!f.isPipe){
+    // TODO need to change offset to ftable's struct in order to avoid multi tread issue
+        offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
+   
+   	acquire(&lock);
+   	p->pftable[fd]->offset+=offset;
    //cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
-   release(&lock);
-  return offset;
-}
+   	release(&lock);
+  	return offset;
+    }else{
+    //Pipe read
+   } 
+
+  }
+
 
 
 int filewrite(int fd, char *buf, int bytes_written) { 
@@ -165,8 +172,12 @@ int filewrite(int fd, char *buf, int bytes_written) {
 
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_RDONLY)return -1;
-   
-   return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
+   if(!f.isPipe){  
+   	return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
+   }else{
+     //Pipe write
+
+   }
 
 }
 

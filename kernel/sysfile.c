@@ -147,7 +147,7 @@ int sys_pipe(void) {
   //arg[0] = read end of pipe
   //arg[1] = write end of pipe  
   
-  if(arptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0)
+  if(argptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0)
     return -1;
 
   //  acquire(&ftable.lock);

@@ -30,6 +30,18 @@ enum {
   CONSOLE = 1,
 };
 
+
+struct pipe {
+
+ int read_fd;
+ int write_fd;
+ int head; 
+ int tail;
+ bool full;
+ bool empty;
+ char buf[2048];
+}; 
+
 //File info struct
 struct file_info{
     int ref;//reference count
@@ -38,17 +50,11 @@ struct file_info{
     int prev_offset;
     int access_permission;// not sure whether it's a right type
     char* path;
+    bool isPipe;
+    struct pipe pipe_buffer;
 };
 
 
-struct pipe {
-  int read_fd;
-  int write_fd;
-  int head;
-  int tail;
-  char buf[2048];
-
-};
 
 //extern struct file_info ftable[NFILE];
 

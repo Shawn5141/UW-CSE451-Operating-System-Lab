@@ -157,6 +157,8 @@ int fileread(int fd, char *buf, int bytes_read) {
   	return offset;
     }else{
     //Pipe read
+
+
    } 
 
   }
@@ -198,6 +200,7 @@ int filedup(int fd) {
   }
   return -1; //not available
 }
+
 void filecopy(struct proc* parent,struct proc* child){
     for(int i=0;i<NOFILE;i++){
       if(parent->pftable[i]!=NULL){
@@ -207,11 +210,62 @@ void filecopy(struct proc* parent,struct proc* child){
          release(&lock);
       }
     }
-
 }
 
 
 int pipe(int *fds) {
+
+  struct pipe *p_ptr = (struct pipe*) kalloc();
+  if(p_ptr == NULL) return -1;
+
+  int idx;
+  int fd[2];
+
+  //TODO check process file table for fds
+  /*
+  struct proc *p = myproc();
+  int index = 0;
+  for(int i=0; i<NOFILE; i++) {
+    if(p->pftable[i] == NULL) {
+      fds[index] = i;
+      index++;
+    }
+    if(index == 2)
+      break;
+  }
+
+//TODO handle errors
+  */
+
+
+  //check global file table for fds
+  for(int i=0; i< NFILE; i++) {
+    if(ftable[i].ref == 0 && idx < 2) { //check if slot is empty
+      ftable[i].ref = 1;
+      fd[idx] = i;
+      idx++;
+    }
+  }
+
+  //no sufficient space
+  if(idx < 2) {
+    if(idx == 1) //reset
+      ftable[fd[0]].ref = 0;
+    kfree((char*) p_ptr);
+    return -1;
+  }
+
+  //arg[0] = read end of pipe
+  //arg[1] = write end of pipe
+  p_ptr->read_fd = fd[0];
+  p_ptr->write_fd = fd[1];
+  p_ptr->head = 0;
+  p_ptr->tail = 0;
+  p_ptr->full = false;
+  p_ptr->empty = true;
+
+  //TODO finish initializing
+
 
 
 }

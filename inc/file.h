@@ -32,14 +32,22 @@ enum {
 
 
 struct pipe {
+<<<<<<< HEAD
   struct spinlock lock;
+=======
+ struct spinlock lock; 
+>>>>>>> 4713a3a673c2c8f07e71658e7ec3f483321eab84
  int read_fd;
  int write_fd;
  int head; 
  int tail;
  bool full;
  bool empty;
+<<<<<<< HEAD
   bool middle;
+=======
+ bool middle;
+>>>>>>> 4713a3a673c2c8f07e71658e7ec3f483321eab84
  char buf[2048];
 }; 
 

@@ -162,8 +162,9 @@ int sys_pipe(void) {
 
   //Create a pipe and two open file descriptors
   
-  if(argptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0)
+  if(argptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0){
     return -1;
+  }
 
   //  acquire(&ftable.lock);
   int res = pipe(pipe_fds);

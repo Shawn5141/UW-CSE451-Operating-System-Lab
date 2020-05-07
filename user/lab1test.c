@@ -100,7 +100,8 @@ void testinvalidargs(void) {
   char buf[11];
   struct stat st;
 
-
+  int pid =fork();
+  if(pid==0)exit();
   // read
   printf(stdout,"\nStart testinvalidargs\n");
   if (read(15, buf, 11) != -1)

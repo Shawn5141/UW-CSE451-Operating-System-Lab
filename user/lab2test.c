@@ -108,7 +108,7 @@ void pipetest(void) {
   int fds[2], pid;
   int seq, i, n, cc, total;
 
-  printf(1, "pipetest\n");
+  printf(1, "pipetest start\n");
 
   if (pipe(fds) != 0) {
     error("pipetest: pipe() failed\n");
@@ -116,6 +116,7 @@ void pipetest(void) {
   pid = fork();
   seq = 0;
   if (pid == 0) {
+    
     close(fds[0]);
     for (n = 0; n < 5; n++) {
       for (i = 0; i < 95; i++)

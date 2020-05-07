@@ -139,6 +139,7 @@ int fork(void) {
      if(myproc()->pftable[i] != NULL) {
        p->pftable[i] = &(*(myproc()->pftable[i]));
        p->pftable[i]->ref++;
+       //cprintf("forking pftable %d\n",i);
      }
      release(&ptable.lock);
    }
@@ -367,8 +368,8 @@ static void wakeup1(void *chan) {
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
-  //    cprintf("p->state =runnalble for PID %d",p->pid);
     }
+      
 }
 
 // Wake up all processes sleeping on chan.
@@ -389,8 +390,9 @@ int kill(int pid) {
     if (p->pid == pid) {
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if (p->state == SLEEPING)
-        p->state = RUNNABLE;
+      if (p->state == SLEEPING){
+         p->state = RUNNABLE;
+      }
       release(&ptable.lock);
       return 0;
     }

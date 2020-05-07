@@ -157,8 +157,28 @@ int fileread(int fd, char *buf, int bytes_read) {
   	return offset;
     }else{
     //Pipe read
+      acquire(&f.pipe_buffer.lock);
+      int size = sizeof(f.pipe_buffer.buf);
+      int idx=0;
+      while(idx<bytes_read){
+         while(f.pipe_buffer.empty){
+           sleep(&f.pipe_buffer.full,&f.pipe_buffer.lock);
+        }
+        memmove(buf, f.pipe_buffer.buf[f.pipe_buffer.head], 1);
+        f.pipe_buffer.head++;
+        f.pipe_buffer.head%=size;
+        idx++;
+ 	buf++;
+        f.pipe_buffer.full=false;
+       //Not sure how to handle full during write situation, call sleep again?         
+       if(f.pipe_buffer.head==f.pipe_buffer.tail){
+          f.pipe_buffer.empty=true;
+          wakeup(&f.pipe_buffer.empty);
+       }
+     }       
 
-
+      release(&f.pipe_buffer.lock);
+      return bytes_read;
    } 
 
   }
@@ -166,19 +186,39 @@ int fileread(int fd, char *buf, int bytes_read) {
 
 
 int filewrite(int fd, char *buf, int bytes_written) { 
-  
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
-   
    struct file_info f=*(p->pftable[fd]);
-
+  // cprintf(" fd = %d",fd);
+   //cprintf("fd =%d isPipe %d \n",fd,f.isPipe); 
    if(f.iptr==NULL)return -1;
    if(f.access_permission==O_RDONLY)return -1;
    if(!f.isPipe){  
    	return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
    }else{
+      cprintf("start to pipe write");
      //Pipe write
+      acquire(&f.pipe_buffer.lock);
+      int idx = 0;
+      int size = sizeof(f.pipe_buffer.buf);
+      while(idx > bytes_written ){
+        while(f.pipe_buffer.full){
+          sleep(&f.pipe_buffer.empty, &f.pipe_buffer.lock);
+        }  
+        memmove(f.pipe_buffer.buf[f.pipe_buffer.tail],buf, 1);
+        idx++ ;
+        f.pipe_buffer.tail++;
+        f.pipe_buffer.tail%=size;
+        f.pipe_buffer.empty=false;
+        if(f.pipe_buffer.tail==f.pipe_buffer.head){
+           f.pipe_buffer.full = true;
+           wakeup(&f.pipe_buffer.full); 
+        }
 
+      } 
+      
+      release(&f.pipe_buffer.lock);
+      return bytes_written;
    }
 
 }
@@ -188,8 +228,8 @@ int filedup(int fd) {
    if(p->pftable[fd]==NULL)return -1;
    struct file_info f=*(p->pftable[fd]);
    if(f.iptr==NULL)return -1;
-  for(int i = 0; i < NOFILE; i++) {
-    if(p->pftable[i] == NULL) {
+   for(int i = 0; i < NOFILE; i++) {
+     if(p->pftable[i] == NULL) {
       acquire(&lock);
       p->pftable[i] = p->pftable[fd]; 
       p->pftable[fd]->ref++;     //increase reference count
@@ -214,44 +254,47 @@ void filecopy(struct proc* parent,struct proc* child){
 
 
 int pipe(int *fds) {
+  
+  struct proc* p = myproc();
+  struct pipe *p_ptr;
+  //if(p_ptr == NULL) return -1;
 
-  struct pipe *p_ptr = (struct pipe*) kalloc();
-  if(p_ptr == NULL) return -1;
-
-  int idx;
-  int fd[2];
+  int idx=0;
+  int fd[2] = {-1,-1};
 
   //TODO check process file table for fds
-  /*
-  struct proc *p = myproc();
-  int index = 0;
-  for(int i=0; i<NOFILE; i++) {
-    if(p->pftable[i] == NULL) {
-      fds[index] = i;
-      index++;
-    }
-    if(index == 2)
-      break;
-  }
-
-//TODO handle errors
-  */
-
-
   //check global file table for fds
-  for(int i=0; i< NFILE; i++) {
-    if(ftable[i].ref == 0 && idx < 2) { //check if slot is empty
+  int i=0;
+  bool foundSlot=false; 
+  for( ; i< NFILE; i++) {
+    if(ftable[i].ref == 0 ) { //check if slot is empty
       ftable[i].ref = 1;
-      fd[idx] = i;
-      idx++;
+      ftable[i].isPipe= true;
+      cprintf("file table %d is pipe",i);
+      foundSlot = true;
+      p_ptr = &ftable[i].pipe_buffer;
+      break;
     }
   }
-
+  //TODO handle errors
+  if(!foundSlot){
+     cprintf("no slot found in ftable ");
+     return -1;
+  }
+  //check local process file table
+  int j=0;
+  for(;j<NOFILE;j++){
+    if(p->pftable[j]==NULL && idx<2){
+       fds[idx]=j;
+       idx++;
+    } 
+  }
+ 
   //no sufficient space
   if(idx < 2) {
-    if(idx == 1) //reset
-      ftable[fd[0]].ref = 0;
+    ftable[i].ref = 0;
     kfree((char*) p_ptr);
+    cprintf("no space in process file table");
     return -1;
   }
 
@@ -263,9 +306,6 @@ int pipe(int *fds) {
   p_ptr->tail = 0;
   p_ptr->full = false;
   p_ptr->empty = true;
-
   //TODO finish initializing
-
-
-
+   return 0;
 }

@@ -32,7 +32,7 @@ enum {
 
 
 struct pipe {
-
+ struct spinlock lock; 
  int read_fd;
  int write_fd;
  int head; 

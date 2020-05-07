@@ -117,19 +117,16 @@ void pipetest(void) {
   seq = 0;
   if (pid == 0) {
     
-    printf(1,"child fd1 %d, fd2 %d \n",fds[0],fds[1]);
     close(fds[0]);
     for (n = 0; n < 5; n++) {
       for (i = 0; i < 95; i++)
         buf[i] = seq++;
-      printf(1,"fd1 %d",fds[1]);
       if (write(fds[1], buf, 95) != 95) {
         error("pipetest: oops 1\n");
       }
     }
     exit();
   } else if (pid > 0) {
-    printf(1,"parent fd1 %d, fd2 %d \n",fds[0],fds[1]);
     close(fds[1]);
     total = 0;
     cc = 1;

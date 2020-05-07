@@ -151,13 +151,11 @@ int sys_pipe(void) {
   //arg[1] = write end of pipe  
   
   if(argptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0){
-    cprintf("argptr is wrong");
     return -1;
   }
 
   //  acquire(&ftable.lock);
   int res = pipe(pipe_fds);
   //release(&ftable.lock);
-  cprintf("in sys pipe fd1 =%d fd2= %d",pipe_fds[0],pipe_fds[1]);
   return res;
 }

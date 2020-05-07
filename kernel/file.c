@@ -143,43 +143,120 @@ int fileread(int fd, char *buf, int bytes_read) {
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
    struct file_info f=*(p->pftable[fd]);
-   if(f.iptr==NULL)return -1;
-   if(f.access_permission==O_WRONLY)return -1;
-   
    if(!f.isPipe){
-    // TODO need to change offset to ftable's struct in order to avoid multi tread issue
-        offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
+     if(f.iptr==NULL)return -1;
+     if(f.access_permission==O_WRONLY)return -1;
    
-   	acquire(&lock);
-   	p->pftable[fd]->offset+=offset;
-   //cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
-   	release(&lock);
-  	return offset;
+     // TODO need to change offset to ftable's struct in order to avoid multi tread issue
+     offset= concurrent_readi(f.iptr,buf,f.offset,bytes_read);  
+
+     acquire(&lock);
+     p->pftable[fd]->offset+=offset;
+     //cprintf("offset right now %d and try to read %d bytes and got %d read \n",p->pftable[fd]->offset,bytes_read,offset);
+     release(&lock);
+     return offset;
     }else{
-    //Pipe read
+     //Pipe read
+     //Return if pipe read fd is not same 
+     if(f.pipe_buffer.read_fd!=fd){
+       return -1;
+     }
+     acquire(&p->pftable[fd]->pipe_buffer.lock);
+     int size = sizeof(f.pipe_buffer.buf);
+     int idx=0;
+     //Need to fix the bug here
+     //keep reading till the end
+     cprintf("\n enter reading \n");
+     while(idx<bytes_read){
+       //block if empty
+       while(p->pftable[fd]->pipe_buffer.empty){
+	 //sleep on some condition variable: right now set to middle but is wrong TODO
+	 cprintf("read sleep empty %d\n",p->pftable[fd]->pipe_buffer.empty);
+	 wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
+	 sleep(&p->pftable[fd]->pipe_buffer.read_fd,&p->pftable[fd]->pipe_buffer.lock);
+       }
+       //Copy to buf TODO need to figure out void* and whehter to use index or just ++
+       //  memmove(buf, f.pipe_buffer.buf[f.pipe_buffer.head], 1);
+       cprintf("r %d ",p->pftable[fd]->pipe_buffer.empty);
+       buf[idx] = p->pftable[fd]->pipe_buffer.buf[p->pftable[fd]->pipe_buffer.head];
+       p->pftable[fd]->pipe_buffer.head++;
+       p->pftable[fd]->pipe_buffer.head%=size;
+       idx++;
+       p->pftable[fd]->pipe_buffer.full=false; //Everytime we succeed in reading, it won't be full
+       //TODO Not sure when to call wake up
+       //If head catch tail : it's empty
+       wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
+       if(p->pftable[fd]->pipe_buffer.head==p->pftable[fd]->pipe_buffer.tail){
+	 cprintf("\nbecome emtpy =======================\n");
+	 p->pftable[fd]->pipe_buffer.empty=true;
+       }
+     }       
 
-
+     wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
+     release(&p->pftable[fd]->pipe_buffer.lock);
+     cprintf("finsihing reading====\n\n");
+     return bytes_read;
    } 
 
   }
 
 
 
-int filewrite(int fd, char *buf, int bytes_written) { 
-  
+int filewrite(int fd, char *buf, int bytes_written) {   
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
    
+
+
    struct file_info f=*(p->pftable[fd]);
-
-   if(f.iptr==NULL)return -1;
-   if(f.access_permission==O_RDONLY)return -1;
    if(!f.isPipe){  
-   	return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
+     if(f.iptr==NULL)return -1;
+     if(f.access_permission==O_RDONLY)return -1;
+     return concurrent_writei(f.iptr, buf, f.offset, bytes_written);
    }else{
-     //Pipe write
+     // If paased in fd is not smae as pipe_write fd
+        if(p->pftable[fd]->pipe_buffer.write_fd!=fd){
+         return -1;
+       }
+       cprintf("\nenter writing  process\n");
+       
+//Pipe write
+       acquire(&p->pftable[fd]->pipe_buffer.lock);
+       int idx = 0;
+       int size = sizeof(f.pipe_buffer.buf);
+       //Keep loop till everyting is wrote to buffer
+       while(idx < bytes_written ){
+	 //Block if buffer is full
+	 while(p->pftable[fd]->pipe_buffer.full){
+	   //TODO need to figure out condition variable 
+           cprintf("write sleep\n");
+	   wakeup(&p->pftable[fd]->pipe_buffer.read_fd);
+	   sleep(&p->pftable[fd]->pipe_buffer.write_fd, &p->pftable[fd]->pipe_buffer.lock);
+	 } 
+	 //cprintf("w %s\n",buf[idx]);
+	 //move memory from buf to pipe TODO need to check syntax
+	 //memmove(p.pipe_buffer.buf[p->pftable[fd]->pipe_buffer.tail],buf, 1);
+	 p->pftable[fd]->pipe_buffer.buf[p->pftable[fd]->pipe_buffer.tail] = buf[idx];
+	 idx++ ;
+	 p->pftable[fd]->pipe_buffer.tail++;
+	 p->pftable[fd]->pipe_buffer.tail%=size; //make it circular
+	 p->pftable[fd]->pipe_buffer.empty=false;
+	 cprintf("w %d ",p->pftable[fd]->pipe_buffer.empty);
+	 wakeup(&p->pftable[fd]->pipe_buffer.read_fd);
+	 //TODO not sure it's a right place to wakeup
+	 //buffer is full if tail catch head
+	 if(p->pftable[fd]->pipe_buffer.tail==p->pftable[fd]->pipe_buffer.head){
+           
+           cprintf("\n write to full====\n");
+           p->pftable[fd]->pipe_buffer.full = true;
+	 }
 
-   }
+       } 
+       wakeup(&p->pftable[fd]->pipe_buffer.read_fd);
+       release(&p->pftable[fd]->pipe_buffer.lock);
+       cprintf("finsihing writing====\n\n");
+       return bytes_written;
+     }
 
 }
 
@@ -215,57 +292,59 @@ void filecopy(struct proc* parent,struct proc* child){
 
 int pipe(int *fds) {
 
-  struct pipe *p_ptr = (struct pipe*) kalloc();
-  if(p_ptr == NULL) return -1;
+  struct proc* p = myproc();
+  struct pipe *p_ptr; //TODO kalloc();
+  //if(p_ptr == NULL) return -1;
 
-  int idx;
-  int fd[2];
+  int idx=0;
+  // int fds[2] = {-1,-1};
 
   //TODO check process file table for fds
-  /*
-  struct proc *p = myproc();
-  int index = 0;
-  for(int i=0; i<NOFILE; i++) {
-    if(p->pftable[i] == NULL) {
-      fds[index] = i;
-      index++;
-    }
-    if(index == 2)
-      break;
-  }
-
-//TODO handle errors
-  */
-
-
   //check global file table for fds
-  for(int i=0; i< NFILE; i++) {
-    if(ftable[i].ref == 0 && idx < 2) { //check if slot is empty
+  int i=0;
+  bool foundSlot=false; 
+  for( ; i< NFILE; i++) {
+    if(ftable[i].ref == 0 ) { //check if slot is empty
       ftable[i].ref = 1;
-      fd[idx] = i;
-      idx++;
+      ftable[i].isPipe= true;
+      ftable[i].access_permission=O_RDWR;//need to check
+      cprintf("file table %d is pipe",i);
+      foundSlot = true;
+      p_ptr = &ftable[i].pipe_buffer;
+      break;
     }
   }
-
+  //TODO handle errors
+  if(!foundSlot){
+    cprintf("no slot found in ftable ");
+    return -1;
+  }
+  //check local process file table
+  int j=0;
+  for(;j<NOFILE;j++){
+    if(p->pftable[j]==NULL && idx<2){
+      fds[idx]=j;
+      idx++;
+      p->pftable[j] = &ftable[i];
+    } 
+  }
+ 
   //no sufficient space
   if(idx < 2) {
-    if(idx == 1) //reset
-      ftable[fd[0]].ref = 0;
+    ftable[i].ref = 0;
     kfree((char*) p_ptr);
+    cprintf("no space in process file table");
     return -1;
   }
 
   //arg[0] = read end of pipe
   //arg[1] = write end of pipe
-  p_ptr->read_fd = fd[0];
-  p_ptr->write_fd = fd[1];
+  p_ptr->read_fd = fds[0];
+  p_ptr->write_fd = fds[1];
   p_ptr->head = 0;
   p_ptr->tail = 0;
   p_ptr->full = false;
   p_ptr->empty = true;
-
   //TODO finish initializing
-
-
-
+  return 0;
 }

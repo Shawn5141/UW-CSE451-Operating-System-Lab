@@ -32,13 +32,14 @@ enum {
 
 
 struct pipe {
-
+  struct spinlock lock;
  int read_fd;
  int write_fd;
  int head; 
  int tail;
  bool full;
  bool empty;
+  bool middle;
  char buf[2048];
 }; 
 

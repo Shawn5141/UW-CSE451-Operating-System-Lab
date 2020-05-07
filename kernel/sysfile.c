@@ -137,9 +137,23 @@ int sys_open(void) {
 int sys_exec(void) {
   // LAB2
 
+  char *path; //path to executable file
+  char *args[10]; // array of strings for arguments - 1-D array of pointers to char //TODO fix this variable
+
+  // arg0 points to invalid or unmapped address
+  //invalid address before the end of arg0 string
+  if(argstr(0, &path) < 0 || 
+     argptr(0, &path, strlen(path)) < 0)
+     return -1;
+
+  //  if(argptr(1, &args, sizeof(char*)) < 0)
+  //  return -1;
+  int address;
+  if(argint(1, &address) < 0)
+    return -1;
 
 
-  return -1;
+  return exec(path, (char**)args);
 }
 
 int sys_pipe(void) {
@@ -147,8 +161,6 @@ int sys_pipe(void) {
   int *pipe_fds; //pointer to an array of two file descriptors
 
   //Create a pipe and two open file descriptors
-  //arg[0] = read end of pipe
-  //arg[1] = write end of pipe  
   
   if(argptr(0, (char**) &pipe_fds, sizeof(int) *2) < 0)
     return -1;
@@ -156,7 +168,5 @@ int sys_pipe(void) {
   //  acquire(&ftable.lock);
   int res = pipe(pipe_fds);
   //release(&ftable.lock);
-
-
   return res;
 }

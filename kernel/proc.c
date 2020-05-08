@@ -138,8 +138,9 @@ int fork(void) {
      acquire(&ptable.lock);
      if(myproc()->pftable[i] != NULL) {
        p->pftable[i] = &(*(myproc()->pftable[i]));
+      //if(p->pftable[i]->isPipe) cprintf("\nbefore forking %d with ref num = %d\t ",i,p->pftable[i]->ref);
        p->pftable[i]->ref++;
-       //cprintf("forking pftable %d\n",i);
+      //if(p->pftable[i]->isPipe) cprintf("after forking %d with ref num = %d\n",i,p->pftable[i]->ref);
      }
      release(&ptable.lock);
    }

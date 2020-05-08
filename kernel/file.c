@@ -111,18 +111,22 @@ int fileclose(int fd) {
 
    struct proc* p =myproc();
    if(p->pftable[fd]==NULL)return -1;
-   struct file_info f=*(p->pftable[fd]);
-   if(f.iptr==NULL)return -1;
-    
+
+   if(!p->pftable[fd]->isPipe){
+       struct file_info f=*(p->pftable[fd]);
+       if(f.iptr==NULL)return -1;
+   }
     acquire(&lock);
    //Decrease reference count of file by 1
    //If ref count is 1
-   if(f.ref > 1) {
+   if(p->pftable[fd]->ref > 1) {
      p->pftable[fd]->ref -= 1;
+     cprintf("close file===\n");
    } else {
      // cprintf("irelease ===\n\n");
-     irelease(f.iptr);
-    // reset everyting
+   if(!p->pftable[fd]->isPipe){
+     irelease(p->pftable[fd]->iptr);
+   } // reset everyting
      p->pftable[fd]->iptr = 0;
      p->pftable[fd]->ref = 0;
      p->pftable[fd]->path = 0;
@@ -166,32 +170,35 @@ int fileread(int fd, char *buf, int bytes_read) {
       int idx=0;
       //Need to fix the bug here
       //keep reading till the end
-       cprintf("\n enter reading \n");
-      while(idx<bytes_read){
+       cprintf("\n enter reading need to read %d fd num %d\n",bytes_read, p->pftable[fd]->ref);
+      while(idx<bytes_read ){
          //block if empty
          while(p->pftable[fd]->pipe_buffer.empty){
           //sleep on some condition variable: right now set to middle but is wrong TODO
-           cprintf("read sleep empty %d\n",p->pftable[fd]->pipe_buffer.empty);
+           cprintf("read sleep empty %d\n",p->pftable[fd]->ref);
            wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
            sleep(&p->pftable[fd]->pipe_buffer.read_fd,&p->pftable[fd]->pipe_buffer.lock);
         }
         //Copy to buf TODO need to figure out void* and whehter to use index or just ++
       //  memmove(buf, f.pipe_buffer.buf[f.pipe_buffer.head], 1);
-        cprintf("r %d ",p->pftable[fd]->pipe_buffer.empty);
         buf[idx] = p->pftable[fd]->pipe_buffer.buf[p->pftable[fd]->pipe_buffer.head];
+        //cprintf("r %d ",buf[idx]);
         p->pftable[fd]->pipe_buffer.head++;
         p->pftable[fd]->pipe_buffer.head%=size;
         idx++;
         p->pftable[fd]->pipe_buffer.full=false; //Everytime we succeed in reading, it won't be full
         //TODO Not sure when to call wake up
        //If head catch tail : it's empty
-           wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
+          // wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
        if(p->pftable[fd]->pipe_buffer.head==p->pftable[fd]->pipe_buffer.tail){
-          cprintf("\nbecome emtpy =======================\n");
+          cprintf("\nbecome emtpy ======================= \n");
           p->pftable[fd]->pipe_buffer.empty=true;
+          if(p->pftable[fd]->ref<2){
+           release(&p->pftable[fd]->pipe_buffer.lock);
+           return bytes_read;
           }
         }       
-
+       }
            wakeup(&p->pftable[fd]->pipe_buffer.write_fd);
         release(&p->pftable[fd]->pipe_buffer.lock);
        cprintf("finsihing reading====\n\n");
@@ -218,7 +225,7 @@ int filewrite(int fd, char *buf, int bytes_written) {
       if(p->pftable[fd]->pipe_buffer.write_fd!=fd){
          return -1;
      }
-     cprintf("\nenter writing  process\n");
+   //  cprintf("\nenter writing  process need to write %d \n",bytes_written);
      //Pipe write
       acquire(&p->pftable[fd]->pipe_buffer.lock);
       int idx = 0;
@@ -240,13 +247,13 @@ int filewrite(int fd, char *buf, int bytes_written) {
         p->pftable[fd]->pipe_buffer.tail++;
         p->pftable[fd]->pipe_buffer.tail%=size; //make it circular
         p->pftable[fd]->pipe_buffer.empty=false;
-        cprintf("w %d ",p->pftable[fd]->pipe_buffer.empty);
-        wakeup(&p->pftable[fd]->pipe_buffer.read_fd);
+        //cprintf("w %d",p->pftable[fd]->pipe_buffer.tail);
+   //     wakeup(&p->pftable[fd]->pipe_buffer.read_fd);
         //TODO not sure it's a right place to wakeup
         //buffer is full if tail catch head
         if(p->pftable[fd]->pipe_buffer.tail==p->pftable[fd]->pipe_buffer.head){
            
-           cprintf("\n write to full====\n");
+           cprintf("\n become  full============\n");
            p->pftable[fd]->pipe_buffer.full = true;
         }
 
@@ -304,7 +311,6 @@ int pipe(int *fds) {
   bool foundSlot=false; 
   for( ; i< NFILE; i++) {
     if(ftable[i].ref == 0 ) { //check if slot is empty
-      ftable[i].ref = 1;
       ftable[i].isPipe= true;
       ftable[i].access_permission=O_RDWR;//need to check
       cprintf("file table %d is pipe",i);
@@ -325,6 +331,7 @@ int pipe(int *fds) {
        fds[idx]=j;
        idx++;
        p->pftable[j] = &ftable[i];
+       ftable[i].ref+=1;       
     } 
   }
  

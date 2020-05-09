@@ -108,7 +108,7 @@ void pipetest(void) {
   int fds[2], pid;
   int seq, i, n, cc, total;
 
-  printf(1, "pipetest start\n");
+  printf(1, "pipetest \n");
 
   if (pipe(fds) != 0) {
     error("pipetest: pipe() failed\n");
@@ -117,29 +117,24 @@ void pipetest(void) {
   seq = 0;
   if (pid == 0) {
     
-    printf(1,"child closine file in up layer \n");
    
     close(fds[0]);
     for (n = 0; n < 5; n++) {
       for (i = 0; i < 95; i++){
         buf[i] = seq++;
-        printf(1,"w %d ",buf[i]);
       }
       if (write(fds[1], buf, 95) != 95) {
         error("pipetest: oops 1\n");
       }
     }
-    printf(1,"===========write everything=============================\n");
     exit();
   } else if (pid > 0) {
-    printf(1,"parent closine file in up layer \n");
     close(fds[1]);
     total = 0;
     cc = 1;
     while ((n = read(fds[0], buf, cc)) > 0) {
       for (i = 0; i < n; i++) {
         if ((buf[i] & 0xff) != (seq++ & 0xff)) {
-          printf(1,"buf %d seq %d",buf[i]&0xff ,seq &0xff);
           error("pipetest: oops 2 \n");
         }
       }

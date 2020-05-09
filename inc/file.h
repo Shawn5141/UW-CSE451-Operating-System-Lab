@@ -39,7 +39,6 @@ struct pipe {
  int tail;
  bool full;
  bool empty;
- bool middle;
  char buf[2048];
 }; 
 

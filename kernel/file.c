@@ -173,11 +173,14 @@ int fileread(int fd, char *buf, int bytes_read) {
       //Need to fix the bug here
       //keep reading till the end
        while(f->pipe_buffer.head==f->pipe_buffer.tail){
-         if(myproc()->killed !=0  || f->ref==1) {
-          
-        release(&f->pipe_buffer.lock);
+         if(myproc()->killed !=0 ) {
+          release(&f->pipe_buffer.lock);
           return -1;
          }
+         if(f->ref==1){
+            release(&f->pipe_buffer.lock);
+            return 0;
+         } 
            wakeup(&f->pipe_buffer.write_fd);
            sleep(&f->pipe_buffer.read_fd,&f->pipe_buffer.lock);
         }
@@ -224,17 +227,20 @@ int filewrite(int fd, char *buf, int bytes_written) {
       int size = sizeof(f->pipe_buffer.buf);
       for(int i =0;i<bytes_written;i++){
         while((f->pipe_buffer.tail-f->pipe_buffer.head)==size){
-              wakeup(&f->pipe_buffer.read_fd);
-              sleep(&f->pipe_buffer.write_fd, &f->pipe_buffer.lock);
+            wakeup(&f->pipe_buffer.read_fd);
+            sleep(&f->pipe_buffer.write_fd, &f->pipe_buffer.lock);
 	  } 
-          
+          if(f->ref==1){
+	     release(&f->pipe_buffer.lock);
+             return -1;
+          }
           f->pipe_buffer.buf[f->pipe_buffer.tail%size] = buf[i];
           f->pipe_buffer.tail++;
           res++;
       }
 
-      wakeup(&p->pftable[fd]->pipe_buffer.read_fd);
-      release(&p->pftable[fd]->pipe_buffer.lock);
+      wakeup(&f->pipe_buffer.read_fd);
+      release(&f->pipe_buffer.lock);
       return res;
    }
 

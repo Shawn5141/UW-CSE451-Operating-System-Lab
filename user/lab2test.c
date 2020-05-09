@@ -56,7 +56,7 @@ int main() {
     pipetest();
     extendedpipetest();
     childpidtest();
-    exectest();
+    //exectest();
 
     printf(1, "lab2 tests passed!!\n");
 

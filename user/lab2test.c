@@ -56,7 +56,7 @@ int main() {
     pipetest();
     extendedpipetest();
     childpidtest();
-    //exectest();
+    exectest();
 
     printf(1, "lab2 tests passed!!\n");
 
@@ -375,7 +375,7 @@ void childpidtest() {
 
 void exectest(void) {
 
-  printf(1, "childpidtest\n");
+  printf(1, "exectest\n");
   // exectest arg checking
   int pid = fork();
   if (pid < 0) {
@@ -400,15 +400,20 @@ void exectest(void) {
   }
 	printf(1, "exectest: testing ls\n");
   pid = fork();
+  //  printf(stdout, "PASSED FORK\n");
   if (pid < 0) {
     error("exectest: fork failed\n");
   }
+  //  printf(stdout, "CORRECT PID\n");
   char *argv[] = {"ls", 0};
 
   if (pid == 0) {
-    exec("ls", argv);
+    //    printf(stdout, "ENTERED IF\n");
+    exec("ls", argv); 
+    //    printf(stdout, "BREAK HERE?\n");
     error("exectest: exec ls failed\n");
   } else {
+    //    printf(stdout, "ENTERED ELSE\n");
     pid = wait();
   }
 

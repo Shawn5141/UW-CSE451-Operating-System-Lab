@@ -136,24 +136,39 @@ int sys_open(void) {
 
 int sys_exec(void) {
   // LAB2
-
+  
   char *path; //path to executable file
-  char *args[10]; // array of strings for arguments - 1-D array of pointers to char //TODO fix this variable
+  char *args[MAXARG]; // array of strings for arguments - 1-D array of pointers to char - max constant
 
   // arg0 points to invalid or unmapped address
-  //invalid address before the end of arg0 string
-  if(argstr(0, &path) < 0 || 
-     argptr(0, &path, strlen(path)) < 0)
+  if(argstr(0, &path) < 0)
      return -1;
 
-  //  if(argptr(1, &args, sizeof(char*)) < 0)
-  //  return -1;
+  if(argptr(0, &path, strlen(path)) < 0)
+    return -1;
+ 
   int address;
   if(argint(1, &address) < 0)
     return -1;
 
+  //Cycle through until null argument found
+  for(int i=0; i< MAXARG; i++) {
 
-  return exec(path, (char**)args);
+    //get address of each argument
+    int aa;
+    if(fetchint(address + 8*i, &aa) < 0) //if invalid
+      return -1;
+
+    //get argument using its address
+    if(fetchstr(aa, &args[i]) < 0)
+      return -1;
+
+    if(args[i] == '\0')
+      return exec(i, path, args);
+
+  } // end for loop
+
+  return -1; //error 
 }
 
 int sys_pipe(void) {
@@ -166,8 +181,8 @@ int sys_pipe(void) {
     return -1;
   }
 
-  //  acquire(&ftable.lock);
+
   int res = pipe(pipe_fds);
-  //release(&ftable.lock);
+
   return res;
 }

@@ -56,7 +56,7 @@ void consoleintr(int (*)(void));
 noreturn void panic(char *);
 
 // exec.c
-int exec(char *, char **);
+int exec(int, char *, char **);
 
 // fs.c
 void readsb(int dev, struct superblock *sb);

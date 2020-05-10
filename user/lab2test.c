@@ -398,25 +398,27 @@ void exectest(void) {
       error("exec test: wait wrong pid");
     }
   }
-	printf(1, "exectest: testing ls\n");
+
+  printf(1, "exectest: testing ls\n");
   pid = fork();
-  //  printf(stdout, "PASSED FORK\n");
   if (pid < 0) {
     error("exectest: fork failed\n");
   }
-  //  printf(stdout, "CORRECT PID\n");
+
   char *argv[] = {"ls", 0};
 
   if (pid == 0) {
     //    printf(stdout, "ENTERED IF\n");
-    exec("ls", argv); 
+    int res1 = exec("ls", argv); 
+    // printf(stdout, "THE RESULT IS %d\n", res1);
     //    printf(stdout, "BREAK HERE?\n");
     error("exectest: exec ls failed\n");
   } else {
     //    printf(stdout, "ENTERED ELSE\n");
     pid = wait();
   }
-
+  //printf(stdout, "DID IT MAKE IT HERE?\n");
+  
   char *echoargv[] = {"echo", "echotest", "ok", 0};
   printf(stdout, "exectest: test argument\n");
 
@@ -430,7 +432,7 @@ void exectest(void) {
 
   if (pid == 0) {
     // send output to parent.
-    close(stdout);
+    close(stdout); 
     assert(dup(fds[1]) == stdout);
     exec("echo", echoargv);
     error("exectest: exec echo failed\n");

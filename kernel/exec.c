@@ -19,13 +19,12 @@ int exec(int n, char *path, char **argv) {
 
   //read program and load it via spaceloadcode
   //load code for given progam at 'path' into vspace
-  uint64_t rip; //first insutrction for program
+  uint64_t rip; //first instruction for program
   int sz = vspaceloadcode(&temp, path, &rip); 
   if(sz == 0) {
     vspacefree(&temp);
     return -1;
   }
-
 
   //initialize stack region in user's address space
   //vspace begins at SZ_2G and grows down from here
@@ -37,19 +36,24 @@ int exec(int n, char *path, char **argv) {
 
   //address of string args on user stack
   uint64_t userStack_args[n+2];
-  userStack_args[0] = 0x00; // address of pc for return
-  userStack_args[n+1] = 0; //null terminator at end
+  userStack_args[0] = 0x00; // address of pc for return - doesn't matter
+  userStack_args[1 + n] = 0; //null terminator at end
 
   //write string args to user stack
   //create deep copy of arguments from old address space to new one via vscpacewriteova - to export data to a page table that isn't currently installed
 
   uint64_t va_space = SZ_2G; //vspace begins here
   for(int i=0; i< n; i++) {
-    uint64_t size = strlen(argv[i]) + 9; //todo is this correct
-    va_space -= (size/8) *8;
+    //uint64_t size = strlen(argv[i]) + 1;
+    //va_space -= size;
+    //    va_space = (((va_space)) & ~(7)); // round down
 
+
+    uint64_t size = strlen(argv[i]) + 1 + 8; //add 1 for null termination -- add 8?
+    va_space -= (size/8) *8;
+ 
     //write to address
-    res = vspacewritetova(&temp, va_space, argv[i], strlen(argv[i]) + 1);
+    res = vspacewritetova(&temp, va_space, argv[i], size - 8); 
     if(res < 0) {
       vspacefree(&temp);
       return -1;
@@ -59,11 +63,14 @@ int exec(int n, char *path, char **argv) {
   }
 
   //go to address where we will write user stack args to user stack
-  va_space -= (n+2) * 8;
+
+  int copyLen = (n+2) * 8;
+  va_space -=  copyLen;
+ //    va_space = (((va_space)) & ~(7)); // round down
 
   //write pointers to string args in user stack
   //null term and return pc (garbage)
-  if(vspacewritetova(&temp, va_space, (char*)userStack_args, (n+2)*8) < 0) {
+  if(vspacewritetova(&temp, va_space, (char*)userStack_args, copyLen) < 0) {
     vspacefree(&temp);
     return -1;
   }
@@ -74,7 +81,12 @@ int exec(int n, char *path, char **argv) {
   p->tf->rip = rip;
   p->tf->rsi = va_space + 8;
   p->tf->rdi = n;
-  p->tf->rsp = va_space;
+
+  //ISSUE IS HERE
+  p->tf->rsp = 0xffffffff801069fb;// -- dummy garbage value
+ //  p->tf->rsp = va_space;
+
+
 
   //testing
   vspacedumpstack(&temp);
@@ -85,6 +97,8 @@ int exec(int n, char *path, char **argv) {
   vspacefree(&temp);
   if(res < 0)
     return -1;
+
+  //  vspacedumpstack(&(myproc()->vspace));
 
   //once memory is space is ready, use vspaceinstall(myproc()) to engage 
   vspaceinstall(myproc());

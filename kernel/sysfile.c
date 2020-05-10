@@ -163,9 +163,10 @@ int sys_exec(void) {
     if(fetchstr(aa, &args[i]) < 0)
       return -1;
 
-    if(args[i] == '\0')
-      return exec(i, path, args);
-
+    if(args[i] == '\0') {
+      int res = exec(i, path, args);
+       return exec(i, path, args);
+    }
   } // end for loop
 
   return -1; //error 

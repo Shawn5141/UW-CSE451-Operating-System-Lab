@@ -27,3 +27,6 @@ Kill indirectly calls exit. Kill sets the victim's p->killed and if wakes it up 
 Question #4
 For each member of the project team, how many hours did you
 spend on this lab?
+
+Jazmine: 15-20 hours
+Shawn: 20-25 hours

@@ -83,8 +83,8 @@ int exec(int n, char *path, char **argv) {
   p->tf->rdi = n;
 
   //ISSUE IS HERE
-  p->tf->rsp = 0xffffffff801069fb;// -- dummy garbage value
- //  p->tf->rsp = va_space;
+  //p->tf->rsp = 0xffffffff801069fb;// -- dummy garbage value
+   p->tf->rsp = va_space;
 
 
 

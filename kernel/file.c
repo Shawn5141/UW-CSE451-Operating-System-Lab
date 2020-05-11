@@ -22,54 +22,101 @@ struct spinlock lock;
 
 
 int fileopen(char *path,int mode){
-  /*
- *Finds an open spot in the process open file table and has it point the global open file table entry .
- * Finds an open entry in the global open file table and allocates a new file_info struct
-for the process open file table spot to point to.
-Will always open a device, and only open a file if permissions passed are O_RDONLY.
-Returns the index into the process open file table as the file descriptor, or -1 on failure.
- *
- * 
- */
-
+  //  cprintf("ENTERED FILEOPEN\n");
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
+
+  /*
+  //Version 2 
+// trying to open a file that is not read only
+  if(iptr->type==T_FILE && mode!=O_RDONLY)
+      return -1;
+
+
+  struct proc* p=myproc();
+  int gfd = 0;
+  for (gfd = 0; gfd < NFILE; gfd++) {
+    if (ftable[gfd].ref == 0) {
+      struct file_info newFile;
+      newFile.ref = 1;
+      newFile.iptr = iptr;
+      newFile.access_permission = mode;
+      newFile.path = path;
+
+      ftable[gfd] = newFile; // add to global file table
+
+      int foundSlot = 0;
+      // Add to process file table
+      int pfd = 0;//process file descriptor index
+      for(pfd=0;pfd<NOFILE;pfd++){
+	if(p->pftable[pfd]==NULL) { //found empty slot
+	  foundSlot = 1;
+	  break;
+	}
+      }
+
+      if(foundSlot == 0) {
+	// Reset if adding to proc file table fails
+	ftable[gfd].ref = 0;
+	//	ftable[gfd] = NULL;
+	return -1;
+      }
+
+      //Assign pointer to pftable in slot pfd
+      p->pftable[pfd] = &ftable[gfd];
+      return pfd;
+    }
+  }  
+  return -1;
+  */
+
+  //Version 1
   
-  //need to allocate emtpy stat
+  
+//need to allocate emtpy stat
   struct stat *istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
   memset(&istat,0,sizeof(istat));
   // This function is inspired by thread on Ed : https://us.edstem.org/courses/399/discussion/28068
   if(iptr == 0)
     return -1;
-  concurrent_stati(iptr,istat);
-  
 
+  concurrent_stati(iptr,istat);
+
+  /*
+     
   if(iptr->type==T_DIR){ 
-       unlocki(iptr);
+    cprintf("TRYING TO OPEN DIRECTORY\n");
+  //       unlocki(iptr);
+    // cprintf("TRY TO UNLOCK PTR\n");
        return -1;
   }
+  */
 
-// trying to open a file that is not read only
+  if(mode == T_DEV) // The only type cannot open should be T_DEV
+    return -1; 
+
+  // trying to open a file that is not read only
   if(iptr->type==T_FILE && mode!=O_RDONLY)
       return -1;
 
+
   int foundSlot = 0;
-// find open slot on process open file table pftable
- int pfd = 0;//process file descriptor index
- struct proc* p=myproc();
- for(pfd=0;pfd<NOFILE;pfd++){
+  // find open slot on process open file table pftable
+  int pfd = 0;//process file descriptor index
+  struct proc* p=myproc();
+  for(pfd=0;pfd<NOFILE;pfd++){
     if(p->pftable[pfd]==NULL) { //TODO Not sure how to check is emtpty
       foundSlot = 1;
-       break;
+      break;
+    }
   }
- }
 
- if(foundSlot == 0) {
+  if(foundSlot == 0) {
    //   cprintf("THERE ARE NO MORE OPEN SLOTS IN PROCESS FILE TABLE\n");
    return -1;
- }
+  }
 
 
- int gfd =0;//global file descriptor index
+  int gfd =0;//global file descriptor index
   //Lab2 design
   for(gfd=0;gfd<NFILE;gfd++){
     if(ftable[gfd].ref == 0) { // check if slot is empty
@@ -79,18 +126,20 @@ Returns the index into the process open file table as the file descriptor, or -1
       ftable[gfd].iptr = iptr;
       ftable[gfd].access_permission= mode;//TODO Not sure what value should be assign here
       ftable[gfd].path = path;
-      //Assign pointer to pftable in slot pfd
+     
+ //Assign pointer to pftable in slot pfd
       p->pftable[pfd] = &ftable[gfd];
       //Lab2 design
-      release(&lock);
+     release(&lock);
       break;
 
     }
- }
+  }
 
   //  cprintf("%s open in ftable %d and point to global ftable %d with ref %d: \n",path,pfd,gfd,ftable[gfd].ref);
   return pfd;
 
+  
 }
 
 int filestat(int fd,struct stat *fstat) {
@@ -108,38 +157,37 @@ int filestat(int fd,struct stat *fstat) {
 }
 
 int fileclose(int fd) {
-
+  //  cprintf("ENTERED CLOSE\n");
    struct proc* p =myproc();
-   if(p->pftable[fd]==NULL)return -1;
+   if(p->pftable[fd]==NULL)return -1; 
 
    if(!p->pftable[fd]->isPipe){
        struct file_info f=*(p->pftable[fd]);
        if(f.iptr==NULL)return -1;
    }
-    acquire(&lock);
+   acquire(&lock);
    //Decrease reference count of file by 1
    //If ref count is 1
    if(p->pftable[fd]->ref > 1) {
      p->pftable[fd]->ref -= 1;
    } else {
      // cprintf("irelease ===\n\n");
-   if(!p->pftable[fd]->isPipe){
-     irelease(p->pftable[fd]->iptr);
-   } // reset everyting
+     if(!p->pftable[fd]->isPipe){
+       irelease(p->pftable[fd]->iptr);
+     } // reset everyting
      p->pftable[fd]->iptr = 0;
      p->pftable[fd]->ref = 0;
      p->pftable[fd]->path = 0;
      p->pftable[fd]->access_permission = 0;
      p->pftable[fd]->offset=0;
-    
    }
-   //   cprintf("%s close  for fd =%d and ref is %d \n",f.path,fd,p->pftable[fd]->ref);
+   //   cprintf("%s close  for fd =%d and ref is %d \n",p->pftable[fd]->path,fd,p->pftable[fd]->ref);
+   cprintf("close  for fd =%d and ref is %d \n",fd,p->pftable[fd]->ref);
 
    release(&lock);
    //remove file from current process's file table
    p->pftable[fd] = NULL;
    return 0;
- 
 }
 
 int fileread(int fd, char *buf, int bytes_read) {

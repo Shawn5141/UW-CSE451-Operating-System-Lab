@@ -93,7 +93,11 @@ int sys_close(void) {
   if(argfd(0, &fd) < 0)
     return -1;
 
-  int res = fileclose( fd);
+  //  if(ftable[fd].ref == 0)
+  // return -1;
+
+  int res = fileclose(fd);
+  //  cprintf("THE RES FROM FILECLOSE IS %d\n", res);
   return res;
 }
 
@@ -129,7 +133,9 @@ int sys_open(void) {
     return -1;
 
   //call appropriate file function
+  //  acquire(&ftable.lock);
   fd = fileopen(path,mode);
+  //  release(&ftable.lock);
   return fd;
 
 }

@@ -408,16 +408,11 @@ void exectest(void) {
   char *argv[] = {"ls", 0};
 
   if (pid == 0) {
-    //    printf(stdout, "ENTERED IF\n");
-    int res1 = exec("ls", argv); 
-    // printf(stdout, "THE RESULT IS %d\n", res1);
-    //    printf(stdout, "BREAK HERE?\n");
+    exec("ls", argv); 
     error("exectest: exec ls failed\n");
   } else {
-    //    printf(stdout, "ENTERED ELSE\n");
     pid = wait();
   }
-  //printf(stdout, "DID IT MAKE IT HERE?\n");
   
   char *echoargv[] = {"echo", "echotest", "ok", 0};
   printf(stdout, "exectest: test argument\n");
@@ -432,7 +427,9 @@ void exectest(void) {
 
   if (pid == 0) {
     // send output to parent.
-    close(stdout); 
+    printf(stdout, "STUCK BEFORE CLOSE\n");
+    assert(close(stdout) == 0); 
+    //    printf(stdout, "CLOSED STDOUT is %d\n", res2);
     assert(dup(fds[1]) == stdout);
     exec("echo", echoargv);
     error("exectest: exec echo failed\n");

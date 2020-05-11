@@ -120,7 +120,7 @@ void userinit(void) {
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
 int fork(void) {
-
+  //    cprintf("ENTERED FORK\n");
    // A new entry in the process table must be created via `allocproc`
    struct proc *p;
    p=allocproc(); 

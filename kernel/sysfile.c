@@ -164,7 +164,6 @@ int sys_exec(void) {
       return -1;
 
     if(args[i] == '\0') {
-      int res = exec(i, path, args);
        return exec(i, path, args);
     }
   } // end for loop

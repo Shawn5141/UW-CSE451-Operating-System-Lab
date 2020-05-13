@@ -57,7 +57,7 @@ int main() {
     extendedpipetest();
     childpidtest();
     exectest();
-
+    
     printf(1, "lab2 tests passed!!\n");
 
     while (1)
@@ -427,9 +427,7 @@ void exectest(void) {
 
   if (pid == 0) {
     // send output to parent.
-    printf(stdout, "STUCK BEFORE CLOSE\n");
-    assert(close(stdout) == 0); 
-    //    printf(stdout, "CLOSED STDOUT is %d\n", res2);
+    close(stdout);
     assert(dup(fds[1]) == stdout);
     exec("echo", echoargv);
     error("exectest: exec echo failed\n");
@@ -446,6 +444,7 @@ void exectest(void) {
     int count = 0;
     while (count < 12) {
       int ret = read(fds[0], buf + count, byte_to_read);
+      printf(stdout, "THE RETURN FROM READ IS %d\n", ret);
       if (ret == 0 || ret == -1)
         error("exectest: exec echotest no output");
       byte_to_read -= ret;

@@ -60,8 +60,7 @@ int main() {
     
     printf(1, "lab2 tests passed!!\n");
 
-    while (1)
-      ;
+    while (1);
   }
 
   while ((wpid = wait()) >= 0 && wpid != pid)
@@ -444,7 +443,6 @@ void exectest(void) {
     int count = 0;
     while (count < 12) {
       int ret = read(fds[0], buf + count, byte_to_read);
-      printf(stdout, "THE RETURN FROM READ IS %d\n", ret);
       if (ret == 0 || ret == -1)
         error("exectest: exec echotest no output");
       byte_to_read -= ret;

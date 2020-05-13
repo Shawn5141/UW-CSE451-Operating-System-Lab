@@ -68,12 +68,11 @@ LDFLAGS_KERNEL   := -m elf_x86_64 -nodefaultlibs --oformat elf64-x86-64
 GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 QEMUGDB := -gdb tcp::$(GDBPORT)
 
-$(O)/initcode : kernel/initcode.S user/lab2test.c $(ULIB)
-	$(CC) -g -nostdinc -I inc -c kernel/initcode.S -o $(O)/initcode.o
-	$(CC) -g -ffreestanding -MD -MP -mno-sse -I inc -c user/lab2test.c -o $(O)/lab2test.o
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(O)/initcode.out $(O)/initcode.o $(O)/lab2test.o $(ULIB)
-	$(OBJCOPY) -S -O binary $(O)/initcode.out $(O)/initcode
-	$(OBJDUMP) -S $(O)/initcode.out > $(O)/initcode.asm
+$(O)/initcode : kernel/initcode.S
+	      $(CC) -nostdinc -I inc -c kernel/initcode.S -o $(O)/initcode.o
+	      $(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(O)/initcode.out $(O)/initcode.o
+	      $(OBJCOPY) -S -O binary $(O)/initcode.out $(O)/initcode
+	      $(OBJDUMP) -S $(O)/initcode.o > $(O)/initcode.asm
 
 $(O)/bootblock: kernel/bootasm.S kernel/bootmain.c
 	$(CC) -m32 -fno-pic -Os -I inc -c kernel/bootmain.c -o $(O)/bootmain.o

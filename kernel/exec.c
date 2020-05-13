@@ -89,7 +89,7 @@ int exec(int n, char *path, char **argv) {
 
 
   //testing
-  vspacedumpstack(&temp);
+   //  vspacedumpstack(&temp);
 
   //copy into current virtual space
   res = vspacecopy(&(myproc()->vspace), &temp);

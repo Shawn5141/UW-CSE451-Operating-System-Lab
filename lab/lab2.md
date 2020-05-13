@@ -117,7 +117,9 @@ process scheduler. A hardware device generates a timer interrupt on
 fixed intervals. If another process is RUNNABLE, the scheduler will switch
 to it, essentially causing the current process to yield the CPU.
 
-### Question #1
+`vspaceinit`, `vspacecopy` and `vspaceinstall` might be useful.
+
+### Question #1 
 Describe the relationship between `scheduler`, `sched`, `swtch` in `kernel/proc.c`.
 
 ### Question #2
@@ -259,7 +261,8 @@ User programs are in the file system using “Executable and Linkable Format”
 [ELF specification](https://courses.cs.washington.edu/courses/cse451/16au/readings/elf.pdf)
 but you will not need to delve very deeply into the details of this format in this
 class. We have provided functions (i.e., `vspaceloadcode` in `kernel/vspace.c`)
-to read the program and load it into the passed in address space.
+to read the program and load it into the passed in address space. We also have 
+provide functions (i.e., `vspaceinitstack`) to setup and initialize the user stack
 
 You need to setup all the required kernel data structures for the new program.
 This should be slightly similar to `fork`, but the key differences are explained
@@ -269,8 +272,10 @@ One thing special about `exec` compared to `fork` is the need to pass in the
 arguments of the user program. In order to realize this functionality, you need to
 first pull the arguments from the `exec`-ing program. With these arguments, you need to
 carefully construct the user process stack and register state after loading the program
-to give the `main` function in the loaded program its arguments. The arguments that
-xk pulled from the exec-ing program and the arguments that xk is giving to the new
+to give the `main` function in the loaded program its arguments. 
+To initialize the user stack you may use `vspaceinitstack`. 
+In xk, we cap the user stack to be 2GB (`SZ_2G` in `inc/cdefs.h`), see details in [memory.md](memory.md). 
+The arguments that xk pulled from the exec-ing program and the arguments that xk is giving to the new
 user-level program are both in user memory. However, simply copying the pointers is
 not sufficient because the page tables of the two user-level programs are different.
 You must create a deep copy of the argument from the old address space to the new address space

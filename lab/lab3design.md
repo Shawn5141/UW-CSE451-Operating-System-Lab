@@ -26,13 +26,15 @@ The goal of this lab is to manage address spaces
 - upon error, debug exec, pipe, and sbrk
 
 ### Grow user stack:
--
--
-- Grow stack by 1 page 
+- Check if page fault and address> stack_base -10 in 'trap.c` 
+- Grow stack by 1 page using 'vspaceaddmap` 
 - Limit of 10 pages total
 
 ### Copy-on_write fork: 
-- 
+- Initialize same amount of Virtual space for child process. Pointing to corresponding pysical space. 
+- Enable read-only for all page for both child and parent vspace.
+- If write happend in either child/parent process page, page fault happend and kernel will allocate new physical address for that vpage using 'vspaceaddmap` . And change bit to writable.
+- If ref count for pysical page becomes 1, change bit to writable.
 
 ### Modifications to vspacecopy
 -
@@ -41,7 +43,7 @@ The goal of this lab is to manage address spaces
 ## Risk Analysis
 
 ### Unanswered Questions
--
+- How each function in vspace work and relationship between vspace, vregion, and page table
 
 ### Staging of Work
 Start this lab by ....
@@ -49,7 +51,8 @@ Start this lab by ....
 
 ### Time Estimation
 
-- sbrk:
-- Shell commands:
-- Grow user stack:
-- Copy-on-Write fork:
+- sbrk:               10 hr
+- Shell commands:     10 hr
+- Grow user stack:    10 hr
+- Copy-on-Write fork: 15 hr
+- Debug:              10 hr

@@ -1,10 +1,10 @@
-# Lab 2 Design Doc: Multiprocessing
+# Lab 3 Design Doc: Address Space Management
 
 ## Overview
 The goal of this lab is to manage address spaces 
 
 ### Major Parts
-  - sbrk: Allocates more memory at runtime for a process. Increases the user's heap space
+  - sbrk: Allocates more memory at runtime for a process. Increases the user's heap space and supports memory allocation and deallocation at the byte-level
    
   - Run shell commands: Load the shell after xk boots. Run commands `cat`, `echo`, `grep`, `ls`, `wc` alond with `|`
 
@@ -12,13 +12,15 @@ The goal of this lab is to manage address spaces
 
   - Copy-on-Write fork: Optimize the current implementation of fork to allow multiple proccesses to share the same physical memory while still behaving as if the memory was copied
 
- 
 
 ## In-depth Analysis and Implementation
 
 ### Sbrk:
-- increment the heap by `n` bytes
+- increment the heap by `n` bytes as requested user
+- check if there is unused space that already exists inside the user heap
+- if there is not enough space, `kalloc` to get new pages
 - map memory into user's address space using `vregionaddmap` 
+- special case: `vregion[VR_HEAP].size = 0` 
 - return the previous heap limit or -1 if not enough space 
 
 ### Shell Commands: 

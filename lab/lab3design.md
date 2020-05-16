@@ -32,23 +32,17 @@ The goal of this lab is to manage address spaces
 - Grow stack by 1 page using 'vspaceaddmap` 
 - Limit of 10 pages total
 
-### Copy-on_write fork: 
+### Copy-on-write fork: 
 - Initialize same amount of Virtual space for child process. Pointing to corresponding pysical space. 
 - Enable read-only for all page for both child and parent vspace.
 - If write happend in either child/parent process page, page fault happend and kernel will allocate new physical address for that vpage using 'vspaceaddmap` . And change bit to writable.
 - If ref count for pysical page becomes 1, change bit to writable.
-
-### Modifications to vspacecopy
--
     
 
 ## Risk Analysis
 
 ### Unanswered Questions
 - How each function in vspace work and relationship between vspace, vregion, and page table
-
-### Staging of Work
-Start this lab by ....
 
 
 ### Time Estimation

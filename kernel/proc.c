@@ -115,6 +115,23 @@ void userinit(void) {
   p->state = RUNNABLE;
   release(&ptable.lock);
 }
+//sbrk
+int sbrk(int n){
+  int res = 0;
+  struct proc *p = myproc();
+  struct vregion * vr = &p->vspace.regions[VR_HEAP];
+// kernel allocates memory on behalf of the user using kalloc or kfree
+  uint64_t old_bound = vr->va_base+vr->size;
+  
+
+//kernel has to map that memory into the user's address space 
+  if ((res = vregionaddmap(vr,old_bound,n,VPI_PRESENT,VPI_WRITABLE))<0)
+    return -1;
+  vr->size+=n;
+  vspaceinvalidate(&p->vspace);
+  return old_bound;
+}
+
 
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.

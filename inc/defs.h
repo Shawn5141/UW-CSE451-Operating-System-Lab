@@ -147,6 +147,7 @@ void pinit(void);
 void procdump(void);
 noreturn void scheduler(void);
 void sched(void);
+int sbrk(int);
 void sleep(void *, struct spinlock *);
 void userinit(void);
 int wait(void);

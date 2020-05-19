@@ -1,5 +1,6 @@
 # Ignore non source files
 out/
+*.sw*
 *.swp
 *.swo
 # Don't checkin turn in binary

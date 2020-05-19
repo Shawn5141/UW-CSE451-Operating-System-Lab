@@ -47,7 +47,7 @@ void memtest() {
   if ((pid = fork()) == 0) {
     m1 = 0;
     for (i = 0; i < 10; i++) {
-      m2 = malloc(10001);
+      m2 = malloc(10001); //trap error produced here?
       *(char **)m2 = m1;
       m1 = m2;
     }

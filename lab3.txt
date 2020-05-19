@@ -1,21 +1,21 @@
-Question #1
+Student: Shawn Hsiao
+Student: Jazmine Redmond
+
+Question #1:
 Why might an application prefer using malloc and free instead of using sbrk directly?
 
+
 Question #2:
-Explain how the file descriptors of ls and wc change when the user types ls | wc
-in xk's shell.
+Explain how the file descriptors of ls and wc change when the user types ls | wc in xk's shell.
+
 
 Question #3:
-When a syscall completes, user-level execution resumes with the instruction
-immediately after the syscall.  When a page fault exception completes, where does
-user-level execution resume?
+When a syscall completes, user-level execution resumes with the instruction immediately after the syscall.  When a page fault exception completes, where does user-level execution resume?
 
 Question #4:
-How should the kernel decide whether an unmapped reference is a normal stack
-operation versus a stray pointer dereference that
-should cause the application to halt? What should happen, for example, if
-an application calls a procedure with a local variable that is an array
-of a million integers?
+How should the kernel decide whether an unmapped reference is a normal stack operation versus a stray pointer dereference that
+should cause the application to halt? What should happen, for example, if an application calls a procedure with a local variable that is an array of a million integers?
+>>>>>>> a41c99db64e69258399f50077816256f0ed34bc6
 
 
 Question #5:
@@ -35,5 +35,3 @@ Question #7
 For each member of the project team, how many hours did you
 spend on this lab?
 
-Shawn   
-Jazemine 

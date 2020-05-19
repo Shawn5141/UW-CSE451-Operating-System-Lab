@@ -1,0 +1,1 @@
+1. Why might an application prefer using malloc and free instead of using sbrk directly?

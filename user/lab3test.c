@@ -133,7 +133,7 @@ void sbrktest(void) {
     do {
       sysinfo(&info);
       free_pages = info.free_pages;
-      // printf(stdout, "free pages before sbrk: %d\n", free_pages);
+      printf(stdout, "free pages before sbrk: %d\n", free_pages);
       c = sbrk(BIG);
     } while ((c = sbrk(BIG)) != (char *) -1);
     sysinfo(&info);

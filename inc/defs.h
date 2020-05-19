@@ -153,6 +153,7 @@ int wait(void);
 void wakeup(void *);
 void yield(void);
 void reboot(void);
+int  sbrk(int n);
 
 
 // swtch.S

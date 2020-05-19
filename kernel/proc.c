@@ -122,7 +122,6 @@ int sbrk(int n){
   struct vregion * vr = &p->vspace.regions[VR_HEAP];
 // kernel allocates memory on behalf of the user using kalloc or kfree
   uint64_t old_bound = vr->va_base+vr->size;
-  
 
 //kernel has to map that memory into the user's address space 
   if ((res = vregionaddmap(vr,old_bound,n,VPI_PRESENT,VPI_WRITABLE))<0)

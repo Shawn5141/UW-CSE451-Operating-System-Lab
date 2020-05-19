@@ -1,0 +1,35 @@
+Student: Shawn Hsiao
+Student: Jazmine Redmond
+
+Question #1:
+Why might an application prefer using malloc and free instead of using sbrk directly?
+
+
+Question #2:
+Explain how the file descriptors of ls and wc change when the user types ls | wc in xk's shell.
+
+
+Question #3:
+When a syscall completes, user-level execution resumes with the instruction immediately after the syscall.  When a page fault exception completes, where does user-level execution resume?
+
+Question #4:
+How should the kernel decide whether an unmapped reference is a normal stack operation versus a stray pointer dereference that
+should cause the application to halt? What should happen, for example, if an application calls a procedure with a local variable that is an array of a million integers?
+
+
+Question #5:
+Is it possible to reduce the user stack size at
+run-time (i.e., to deallocate the user stack when a procedure with a large number of local variables goes out of scope)?  If so, sketch how that might work.
+
+
+Question #6:
+The TLB caches the page table entries of recently referenced
+pages.  When you modify the page table entry to allow write access, how does xk ensure that the TLB does not have a stale version of the cache?
+
+
+
+Question #7
+For each member of the project team, how many hours did you
+spend on this lab?
+
+

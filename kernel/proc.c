@@ -122,13 +122,25 @@ int sbrk(int n){
   struct vregion * vr = &p->vspace.regions[VR_HEAP];
 // kernel allocates memory on behalf of the user using kalloc or kfree
   uint64_t old_bound = vr->va_base+vr->size;
-
-//kernel has to map that memory into the user's address space 
-  if ((res = vregionaddmap(vr,old_bound,n,VPI_PRESENT,VPI_WRITABLE))<0)
-    return -1;
-  vr->size+=n;
-  vspaceinvalidate(&p->vspace);
-  return old_bound;
+  if(n>=0){
+    if ((res = vregionaddmap(vr,old_bound,n,VPI_PRESENT,VPI_WRITABLE))<0)
+      return -1;
+    vr->size+=n;
+  }else if(n<0){
+    n = -n;
+    // Do nothing if size for dellocation is larger than original size
+    if(n>vr->size){
+       return old_bound;
+      }
+   int npages = (float)n/PAGE_SIZE>n/PAGE_SIZE?n/PAGE_SIZE+1:n/PAGE_SIZE;
+   void *vstart =(void*) &vr->va_base+vr->size;
+   void *vend = (void *)P2V((uint64_t)(npages * PGSIZE)); 
+   freerange(vstart,vend); 
+   vr->size-=n;
+  }
+  //kernel has to map that memory into the user's address space 
+   vspaceinvalidate(&p->vspace);
+   return old_bound;
 }
 
 

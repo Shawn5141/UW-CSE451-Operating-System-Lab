@@ -15,7 +15,6 @@ When a syscall completes, user-level execution resumes with the instruction imme
 Question #4:
 How should the kernel decide whether an unmapped reference is a normal stack operation versus a stray pointer dereference that
 should cause the application to halt? What should happen, for example, if an application calls a procedure with a local variable that is an array of a million integers?
->>>>>>> a41c99db64e69258399f50077816256f0ed34bc6
 
 
 Question #5:

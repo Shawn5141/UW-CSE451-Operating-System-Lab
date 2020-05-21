@@ -33,7 +33,7 @@ void reboot(void) {
   while (good & 0x02)
     good = inb(0x64);
   outb(0x64, 0xFE);
-loop:
+ loop:
   asm volatile("hlt");
   goto loop;
 }
@@ -57,7 +57,7 @@ static struct proc *allocproc(void) {
   release(&ptable.lock);
   return 0;
 
-found:
+ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->killed = 0;
@@ -117,12 +117,13 @@ void userinit(void) {
 }
 //sbrk
 int sbrk(int n){
-  int res = 0;
+  //  cprintf("ENTERED SBRK\n");
+int res = 0;
   struct proc *p = myproc();
   struct vregion * vr = &p->vspace.regions[VR_HEAP];
-// kernel allocates memory on behalf of the user using kalloc or kfree
+  // kernel allocates memory on behalf of the user using kalloc or kfree
   uint64_t old_bound = vr->va_base+vr->size;
-  if(n>=0){
+  if(n>0){
     if ((res = vregionaddmap(vr,old_bound,n,VPI_PRESENT,VPI_WRITABLE))<0)
       return -1;
     vr->size+=n;
@@ -130,17 +131,17 @@ int sbrk(int n){
     n = -n;
     // Do nothing if size for dellocation is larger than original size
     if(n>vr->size){
-       return old_bound;
-      }
-   int npages = (float)n/PAGE_SIZE>n/PAGE_SIZE?n/PAGE_SIZE+1:n/PAGE_SIZE;
-   void *vstart =(void*) &vr->va_base+vr->size;
-   void *vend = (void *)P2V((uint64_t)(npages * PGSIZE)); 
-   freerange(vstart,vend); 
-   vr->size-=n;
-  }
+      return old_bound;
+    }
+    int npages = (float)n/PAGE_SIZE>n/PAGE_SIZE?n/PAGE_SIZE+1:n/PAGE_SIZE;
+    void *vstart =(void*) &vr->va_base+vr->size;
+    void *vend = (void *)P2V((uint64_t)(npages * PGSIZE)); 
+    freerange(vstart,vend); 
+    vr->size-=n;
+  } // if n = 0 do nothing
   //kernel has to map that memory into the user's address space 
-   vspaceinvalidate(&p->vspace);
-   return old_bound;
+  vspaceinvalidate(&p->vspace);
+  return old_bound;
 }
 
 
@@ -148,32 +149,33 @@ int sbrk(int n){
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
 int fork(void) {
-  //    cprintf("ENTERED FORK\n");
-   // A new entry in the process table must be created via `allocproc`
-   struct proc *p;
-   p=allocproc(); 
-   if(p == 0) return -1;
+  //cprintf("ENTERED FORK\n");
 
-   assertm(vspaceinit(&p->vspace) == 0, "error initializing process's virtual address descriptor");
-   // User memory must be duplicated via `vspacecopy`
-   vspacecopy(&p->vspace,&myproc()->vspace);
+  // A new entry in the process table must be created via `allocproc`
+  struct proc *p;
+  p=allocproc(); 
+  if(p == 0) return -1;
 
-// The trapframe must be duplicated in the new process
-   //copy parent trap frame to child
-   memmove(p->tf, myproc()->tf, sizeof(*p->tf)); //sizeof trapframe struct?
-   //copy parent proc file table and update ref count
-   for (int i=0; i < NOFILE; i++) {
-     acquire(&ptable.lock);
-     if(myproc()->pftable[i] != NULL) {
-       p->pftable[i] = &(*(myproc()->pftable[i]));
+  assertm(vspaceinit(&p->vspace) == 0, "error initializing process's virtual address descriptor");
+  // User memory must be duplicated via `vspacecopy`
+  vspacecopy(&p->vspace,&myproc()->vspace);
+
+  // The trapframe must be duplicated in the new process
+  //copy parent trap frame to child
+  memmove(p->tf, myproc()->tf, sizeof(*p->tf)); //sizeof trapframe struct?
+  //copy parent proc file table and update ref count
+  for (int i=0; i < NOFILE; i++) {
+    acquire(&ptable.lock);
+    if(myproc()->pftable[i] != NULL) {
+      p->pftable[i] = &(*(myproc()->pftable[i]));
       //if(p->pftable[i]->isPipe) cprintf("\nbefore forking %d with ref num = %d\t ",i,p->pftable[i]->ref);
-       p->pftable[i]->ref++;
+      p->pftable[i]->ref++;
       //if(p->pftable[i]->isPipe) cprintf("after forking %d with ref num = %d\n",i,p->pftable[i]->ref);
-     }
-     release(&ptable.lock);
-   }
+    }
+    release(&ptable.lock);
+  }
 
-// Set the state of the new process to be `RUNNABLE`
+  // Set the state of the new process to be `RUNNABLE`
   acquire(&ptable.lock);
   p->state = RUNNABLE;
   p->tf->rax = 0;
@@ -182,6 +184,7 @@ int fork(void) {
   // your code here
   
   return p->pid;
+  
 }
 
 // Exit the current process.  Does not return.
@@ -189,7 +192,7 @@ int fork(void) {
 // until its parent calls wait() to find out it exited.
 void exit(void) {
   // your code here
- //cprintf("\n\n====  exit calleed =======\n\n\n"); 
+  //cprintf("\n\n====  exit calleed =======\n\n\n"); 
   //close all files open in process
   for(int i=0; i < NOFILE; i++) {
     if(myproc()->pftable[i] != NULL) {
@@ -208,16 +211,19 @@ void exit(void) {
   }
   wakeup1(myproc()->parent); //wake up parent
   myproc()->state = ZOMBIE; // set child to zombie - regardless of parent status. Should no longer run 
- //do not try to free vspace - cleanup in wait()
+  //do not try to free vspace - cleanup in wait()
   sched(); // because lock then changed process state
   release(&ptable.lock);
 
 }
 
+
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int wait(void) {
+  //  cprintf("ENTERED WAIT\n");
   // your code here
+  
   // Scan through table looking for exited children.
   int hasActiveChildren = 0;
   //cprintf("NPROC =%d, PID =%d  lock =%d  \n",NPROC,myproc()->pid,ptable.lock);
@@ -236,26 +242,28 @@ int wait(void) {
   acquire(&ptable.lock);
   while(true){
     for(int i=0; i< NPROC; i++) {
-       if(ptable.proc[i].parent ==myproc() && ptable.proc[i].state==ZOMBIE){
-           int child_pid =ptable.proc[i].pid;
-           ptable.proc[i].state = UNUSED;
-           vspacefree(&ptable.proc[i].vspace);
-           kfree(ptable.proc[i].kstack);
-           ptable.proc[i].kstack = 0;
-           ptable.proc[i].parent = 0;
-           ptable.proc[i].pid = 0;
-           ptable.proc[i].killed = 0;
-           release(&ptable.lock);
-           return child_pid;
-         }
+      if(ptable.proc[i].parent ==myproc() && ptable.proc[i].state==ZOMBIE){
+	int child_pid =ptable.proc[i].pid;
+	ptable.proc[i].state = UNUSED;
+	vspacefree(&ptable.proc[i].vspace);
+	kfree(ptable.proc[i].kstack);
+	ptable.proc[i].kstack = 0;
+	ptable.proc[i].parent = 0;
+	ptable.proc[i].pid = 0;
+	ptable.proc[i].killed = 0;
+	release(&ptable.lock);
+	return child_pid;
       }
+    }
     //cprintf("pid =%d call sleep on itself\n",myproc()->pid);
     sleep(myproc(),&ptable.lock); //suspend execution
   }
   
 
   return -1;
+  
 }
+
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -309,7 +317,7 @@ void sched(void) {
   if (!holding(&ptable.lock)){
     cprintf("before panic %d", !holding(&ptable.lock));
     panic("sched ptable.lock");
- }
+  }
   if (mycpu()->ncli != 1) {
     cprintf("pid : %d\n", myproc()->pid);
     cprintf("ncli : %d\n", mycpu()->ncli);
@@ -420,7 +428,7 @@ int kill(int pid) {
       p->killed = 1;
       // Wake process from sleep if necessary.
       if (p->state == SLEEPING){
-         p->state = RUNNABLE;
+	p->state = RUNNABLE;
       }
       release(&ptable.lock);
       return 0;

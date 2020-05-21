@@ -56,10 +56,14 @@ int sys_sbrk(void) {
  *  * -1 should still be returned, and nothing should be added to the heap.
  */
  int n; 
- if(argint(0,&n)<0 )
+
+ if(argint(0,&n) < 0)
     return -1;
- if(n<0)n=0;
- return sbrk(n);  
+
+ if (n<0)
+   n=0;
+ 
+return sbrk(n);  
 }
 
 int sys_sleep(void) {

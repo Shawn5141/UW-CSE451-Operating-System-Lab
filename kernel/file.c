@@ -272,7 +272,7 @@ void filecopy(struct proc* parent,struct proc* child){
 
 
 int pipe(int *fds) {
-  
+  cprintf("ENTERED PIPE\n");  
   struct proc* p = myproc();
   struct pipe *p_ptr;
   //if(p_ptr == NULL) return -1;

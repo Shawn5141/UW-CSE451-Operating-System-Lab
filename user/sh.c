@@ -55,6 +55,7 @@ struct cmd *parsecmd(char *);
 
 // Execute cmd.  Never returns.
 void runcmd(struct cmd *cmd) {
+  printf(2, "cmd type in runcmd() is %d\n", cmd->type);
   int p[2];
   struct backcmd *bcmd;
   struct execcmd *ecmd;
@@ -62,9 +63,10 @@ void runcmd(struct cmd *cmd) {
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
 
-  if (cmd == 0)
+  if (cmd == 0) {
+    printf(2, "CMD IS 0\n");
     exit();
-
+  }
   switch (cmd->type) {
   default:
     panic("runcmd");
@@ -158,8 +160,15 @@ int main(void) {
         printf(2, "cannot cd %s\n", buf + 3);
       continue;
     }
-    if (fork1() == 0)
-      runcmd(parsecmd(buf));
+    if (fork1() == 0){
+      //      printf(2, "the buffer is: %s\n", buf);
+      struct cmd* tmp = parsecmd(buf);
+      printf(2, "the cmd before running is %d\n", tmp->type);
+      runcmd(tmp);
+
+
+      //      runcmd(parsecmd(buf));
+    }
     wait();
   }
   exit();
@@ -305,12 +314,14 @@ struct cmd *parsecmd(char *s) {
 
   es = s + strlen(s);
   cmd = parseline(&s, es);
+  printf(2, "cmd after parseline is %d\n", cmd->type);
   peek(&s, es, "");
   if (s != es) {
     printf(2, "leftovers: %s\n", s);
     panic("syntax");
   }
   nulterminate(cmd);
+  //  printf(2, "cmd is %d after nullterminate()\n", cmd->type);
   return cmd;
 }
 
@@ -318,6 +329,7 @@ struct cmd *parseline(char **ps, char *es) {
   struct cmd *cmd;
 
   cmd = parsepipe(ps, es);
+printf(2, "cmd after parsepipe is %d\n", cmd->type);
   while (peek(ps, es, "&")) {
     gettoken(ps, es, 0, 0);
     cmd = backcmd(cmd);
@@ -333,6 +345,7 @@ struct cmd *parsepipe(char **ps, char *es) {
   struct cmd *cmd;
 
   cmd = parseexec(ps, es);
+printf(2, "cmd after parsexec is %d\n", cmd->type);
   if (peek(ps, es, "|")) {
     gettoken(ps, es, 0, 0);
     cmd = pipecmd(cmd, parsepipe(ps, es));
@@ -383,11 +396,14 @@ struct cmd *parseexec(char **ps, char *es) {
   struct execcmd *cmd;
   struct cmd *ret;
 
-  if (peek(ps, es, "("))
+  if (peek(ps, es, "(")){
     return parseblock(ps, es);
+  }
 
   ret = execcmd();
+  printf(2, "ret from execcmd is %d\n", ret->type);
   cmd = (struct execcmd *)ret;
+  printf(2, "cmd after parseexec is %d\n", cmd->type);
 
   argc = 0;
   ret = parseredirs(ret, ps, es);

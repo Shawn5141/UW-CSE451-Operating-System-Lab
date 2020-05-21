@@ -16,6 +16,8 @@ uint ticks;
 
 int num_page_faults = 0;
 
+int growuserstack(void);
+
 void tvinit(void) {
   int i;
 
@@ -79,6 +81,15 @@ void trap(struct trap_frame *tf) {
     if (tf->trapno == TRAP_PF) {
       num_page_faults += 1;
 
+      //GROW U STACK ON DEMAND
+      //check if add > stack_base && page fault > stack_base -10
+      if(addr <= SZ_2G && addr >= SZ_2G - 10 * PGSIZE) {
+	if(growuserstack() == 0)
+	  break;
+
+      }
+
+
       if (myproc() == 0 || (tf->cs & 3) == 0) {
         // In kernel, it must be our mistake.
         cprintf("unexpected trap %d from cpu %d rip %lx (cr2=0x%x)\n",
@@ -110,4 +121,25 @@ void trap(struct trap_frame *tf) {
   // Check if the process has been killed since we yielded
   if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
     exit();
+}
+
+int growuserstack(void) {
+  int res = 0;
+  struct proc *p = myproc();
+  struct vregion * vr = &p->vspace.regions[VR_USTACK];
+
+  uint64_t old_bound = vr->va_base - vr->size;
+
+  //if stack already at max 10 pages
+  if(vr->size >= 10 * PGSIZE)
+    return -1;
+
+  // try to add new page to user stack
+  if ((res = vregionaddmap(vr,old_bound - PGSIZE, PGSIZE,VPI_PRESENT,VPI_WRITABLE))<0)
+    return -1;
+
+  vr->size += PGSIZE;
+
+  vspaceinvalidate(&p->vspace);
+  return 0;
 }

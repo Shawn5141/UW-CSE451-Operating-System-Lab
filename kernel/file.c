@@ -26,13 +26,13 @@ int fileopen(char *path,int mode){
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
   
 //need to allocate emtpy stat
-  struct stat *istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
-  memset(&istat,0,sizeof(istat));
+  struct stat istat;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
+  //memset(&istat,0,sizeof(istat));
   // This function is inspired by thread on Ed : https://us.edstem.org/courses/399/discussion/28068
   if(iptr == 0)
     return -1;
 
-  concurrent_stati(iptr,istat);
+  concurrent_stati(iptr,&istat);
 
   /*
      

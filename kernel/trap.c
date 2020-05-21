@@ -78,17 +78,17 @@ void trap(struct trap_frame *tf) {
   default:
     addr = rcr2();
 
-    if (tf->trapno == TRAP_PF) {
+    if (tf->trapno == TRAP_PF) { //if page fault
       num_page_faults += 1;
 
       //GROW U STACK ON DEMAND
-      //check if add > stack_base && page fault > stack_base -10
+      // upon hardware exception, exception handler will add memory to the stack region and resume execution
+      //check if addr > stack_base -10
       if(addr <= SZ_2G && addr >= SZ_2G - 10 * PGSIZE) {
-	if(growuserstack() == 0)
-	  break;
-
+	if(growuserstack() == 0) //grow stack
+	  break; // resume execution
+	// else normal page fault - can't handle
       }
-
 
       if (myproc() == 0 || (tf->cs & 3) == 0) {
         // In kernel, it must be our mistake.
@@ -124,6 +124,7 @@ void trap(struct trap_frame *tf) {
 }
 
 int growuserstack(void) {
+  // similar to sbrk, but growing stack not heap 
   int res = 0;
   struct proc *p = myproc();
   struct vregion * vr = &p->vspace.regions[VR_USTACK];

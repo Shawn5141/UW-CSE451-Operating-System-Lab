@@ -61,11 +61,9 @@ void runcmd(struct cmd *cmd) {
   struct listcmd *lcmd;
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
-  //if (cmd == 0){
-  printf(1,"\nexit %d\n",cmd);
-  //  exit();
-  //}
-  printf(1,"enter runcmd %d\n",cmd->type);
+  if (cmd == 0){
+    exit();
+  }
   switch (cmd->type) {
   default:
     panic("runcmd");
@@ -75,14 +73,12 @@ void runcmd(struct cmd *cmd) {
     if (ecmd->argv[0] == 0)
       exit();
     exec(ecmd->argv[0], ecmd->argv);
-    printf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
 
   case REDIR:
     rcmd = (struct redircmd *)cmd;
     close(rcmd->fd);
     if (open(rcmd->file, rcmd->mode) < 0) {
-      printf(2, "open %s failed\n", rcmd->file);
       exit();
     }
     runcmd(rcmd->cmd);
@@ -160,10 +156,7 @@ int main(void) {
       continue;
     }
     if (fork1() == 0){
-      printf(1,"fork child%s",buf);
       struct cmd *cmdptr=parsecmd(buf);
-      
-      printf(1,"cmdptr %d\n",cmdptr);
       runcmd(cmdptr);
     }
     wait();
@@ -224,7 +217,6 @@ struct cmd *pipecmd(struct cmd *left, struct cmd *right) {
 
 struct cmd *listcmd(struct cmd *left, struct cmd *right) {
   struct listcmd *cmd;
-  printf(1,"list lcmd %d, rcmd %d",cmd->type,cmd->type);
   cmd = malloc(sizeof(*cmd));
   memset(cmd, 0, sizeof(*cmd));
   cmd->type = LIST;
@@ -310,10 +302,7 @@ struct cmd *parsecmd(char *s) {
   struct cmd *cmd;
 
   es = s + strlen(s);
-  printf(1,"s %s\n",s);
-  printf(1,"es %d\n",strlen(s));
   cmd = parseline(&s, es);
-  printf(1,"cmd %d\n",cmd->type);
   peek(&s, es, "");
   if (s != es) {
     printf(2, "leftovers: %s\n", s);
@@ -392,7 +381,6 @@ struct cmd *parseexec(char **ps, char *es) {
   struct execcmd *cmd;
   struct cmd *ret;
 
-  printf(1,"enter parseexec");
   if (peek(ps, es, "("))
     return parseblock(ps, es);
 
@@ -408,7 +396,6 @@ struct cmd *parseexec(char **ps, char *es) {
       panic("syntax");
     cmd->argv[argc] = q;
     cmd->eargv[argc] = eq;
-    printf(1,"\nargv %s eargv %s\n",q,eq);
     argc++;
     if (argc >= MAXARGS)
       panic("too many args");
@@ -428,9 +415,7 @@ struct cmd *nulterminate(struct cmd *cmd) {
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
 
-  printf(1,"nullterminate%d %d\n",cmd->type,EXEC);
   if (cmd == 0){
-    printf(1,"cmd is zero");
     return 0;
   }
 
@@ -454,7 +439,6 @@ struct cmd *nulterminate(struct cmd *cmd) {
     break;
 
   case LIST:
-    printf(1,"List type");
     lcmd = (struct listcmd *)cmd;
     nulterminate(lcmd->left);
     nulterminate(lcmd->right);
@@ -465,7 +449,6 @@ struct cmd *nulterminate(struct cmd *cmd) {
     nulterminate(bcmd->cmd);
     break;
   }
-  printf(1,"nulterminate cmd %d",cmd);
   return cmd;
 }
 

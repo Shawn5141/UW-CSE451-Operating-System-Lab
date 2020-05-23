@@ -96,25 +96,31 @@ void trap(struct trap_frame *tf) {
 	if(!data){ // kalloc fails 
 	  break;
         }
+
+	memset(data, 0, PGSIZE);
         //copy the data from the copy-on-write page
         memmove(data, P2V(vpi->ppn << PT_SHIFT), PGSIZE);
-        acquire_core_map_lock();
+	acquire_core_map_lock();
         entry->ref_count--;   	// ref count decrement   
-        release_core_map_lock();
+	//        release_core_map_lock();
 	vpi->used = 1; //page is in use
         vpi->writable = VPI_WRITABLE;//make vpi writable
 	vpi->present = VPI_PRESENT; // in physical memory
         vpi->cow_page = false;         //make vpi non_cow_page
         //faulting process start writing to that freshly-allocated page
         vpi->ppn = PGNUM(V2P(data)); 
+	release_core_map_lock();
 
 	vspaceinvalidate(&myproc()->vspace);
 	vspaceinstall(myproc());
 
         break;
       } else if(vpi->cow_page==true && entry->ref_count == 1 && vpi->writable==0){ //only reference to unwritable page 
+	acquire_core_map_lock();
 	vpi->writable = VPI_WRITABLE;//make vpi writable
         vpi->cow_page = false;         //make vpi non_cow_page
+	release_core_map_lock();
+
 
 	vspaceinvalidate(&myproc()->vspace);
 	vspaceinstall(myproc());

@@ -474,16 +474,19 @@ copy_vpi_page(struct vpi_page **dst, struct vpi_page *src)
     if (srcvpi->used) {
       dstvpi->used = srcvpi->used;
       dstvpi->present = srcvpi->present;
-      dstvpi->writable = 0; //Read only
-      dstvpi->ppn = srcvpi->ppn;
-      srcvpi->cow_page = true ; //where to turn it off
+
       dstvpi->cow_page = true ;
+      srcvpi->cow_page = true ; //where to turn it off
+
+      dstvpi->writable = 0; //Read only
+      srcvpi->writable = 0;
+      dstvpi->ppn = srcvpi->ppn;
       //if (!(data = kalloc()))
       //  return -1;
       //memmove(data, P2V(srcvpi->ppn << PT_SHIFT), PGSIZE);
       //Need to increase ref count 
+      struct core_map_entry* entry = (struct core_map_entry *)pa2page(srcvpi->ppn<<PT_SHIFT);
       acquire_core_map_lock();
-      struct core_map_entry* entry = (struct core_map_entry *)pa2page(dstvpi->ppn<<PT_SHIFT);
       entry->ref_count++;
       release_core_map_lock();
       //Assign to same pysical page 
@@ -507,7 +510,7 @@ vspacecopy(struct vspace *dst, struct vspace *src)
       return -1;
 
   vspaceinvalidate(dst);
-  vspaceinstall(myproc());
+  //  vspaceinstall(myproc());
   return 0;
 }
 

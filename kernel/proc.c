@@ -20,6 +20,7 @@ struct {
 } ptable;
 
 static struct proc *initproc;
+
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -160,6 +161,9 @@ int fork(void) {
   // User memory must be duplicated via `vspacecopy`
   vspacecopy(&p->vspace,&myproc()->vspace);
 
+  vspaceinvalidate(&p->vspace);
+  vspaceinstall(myproc());
+  
   // The trapframe must be duplicated in the new process
   //copy parent trap frame to child
   memmove(p->tf, myproc()->tf, sizeof(*p->tf)); //sizeof trapframe struct?
@@ -179,7 +183,6 @@ int fork(void) {
   p->tf->rax = 0;
   p->parent = myproc(); //set the parent 
   release(&ptable.lock);   
-  // your code here
   
   return p->pid;
   

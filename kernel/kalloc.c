@@ -123,8 +123,8 @@ void kfree(char *v) {
     r->ref_count = 0; // should already be 0
   
   }
-    if (kmem.use_lock)
-      release(&kmem.lock);
+  if (kmem.use_lock)
+    release(&kmem.lock);
 }
 
 void
@@ -200,14 +200,14 @@ struct core_map_entry * get_random_user_page() {
   }
   panic("Tried 100 random indices for random user page, all failed");
 }
-void acquire_core_map_lock(void){
-if(kmem.use_lock)
-  acquire(&kmem.lock);
 
+void acquire_core_map_lock(void){
+  if(kmem.use_lock)
+    acquire(&kmem.lock);
 }
 
 void release_core_map_lock(void){
-if(kmem.use_lock){
-  release(&kmem.lock);
-}
+  if(kmem.use_lock){
+    release(&kmem.lock);
+  }
 }

@@ -9,7 +9,6 @@
 #include <x86_64.h>
 
 int exec(int n, char *path, char **argv) {
-  // your code here
 
   //overwrite current user's virtual address space
 
@@ -81,12 +80,7 @@ int exec(int n, char *path, char **argv) {
   p->tf->rip = rip;
   p->tf->rsi = va_space + 8;
   p->tf->rdi = n;
-
-  //ISSUE IS HERE
-  //p->tf->rsp = 0xffffffff801069fb;// -- dummy garbage value
-   p->tf->rsp = va_space;
-
-
+  p->tf->rsp = va_space;
 
   //testing
    //  vspacedumpstack(&temp);

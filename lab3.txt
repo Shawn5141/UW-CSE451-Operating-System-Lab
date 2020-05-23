@@ -4,9 +4,16 @@ Student: Jazmine Redmond
 Question #1:
 Why might an application prefer using malloc and free instead of using sbrk directly?
 
+While malloc/free sit on top of sbrk, there is a separation of duties between these functions. sbrk is a system call in the kernel that allocates an additional chunk of space on behalf of the process. Therefore sbrk does not have a very user-friendly interface when the user wants to allocate or free bytes.
+malloc and free are standardized as part of the C language and they manage this space from the user level. They are also easier to use in threaded programs, allows memory to be allocated in small units, and allow the deallocation of blocks of memory. These functions also have less system call overhead.
+malloc can sometimes expand the heap size more than desired since it rounds up the requested size to the proper number of header-sized units. This means that the next instruction that could need more heap memory would not need to ask for more thus reducing the number of system calls and improving efficiency. 
+
 
 Question #2:
 Explain how the file descriptors of ls and wc change when the user types ls | wc in xk's shell.
+
+When a user types this pipe is called which creates a new pipe and returns a pair of file descriptors, one for reading and one for writing. The first argument ls writes to the pipe and the second argument wc reads from it.
+After forking twice, the first child will close its stdout file and replace it with the write file descriptor of the pipe, then exec ls. The second child will close its stdin file, set the file descriptor to the read end of the pipe, and exec wc.
 
 
 Question #3:

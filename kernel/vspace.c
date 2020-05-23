@@ -482,10 +482,10 @@ copy_vpi_page(struct vpi_page **dst, struct vpi_page *src)
       //  return -1;
       //memmove(data, P2V(srcvpi->ppn << PT_SHIFT), PGSIZE);
       //Need to increase ref count 
-      //acquire_core_map_lock();
+      acquire_core_map_lock();
       struct core_map_entry* entry = (struct core_map_entry *)pa2page(dstvpi->ppn<<PT_SHIFT);
       entry->ref_count++;
-      //release_core_map_lock();
+      release_core_map_lock();
       //Assign to same pysical page 
 
     }

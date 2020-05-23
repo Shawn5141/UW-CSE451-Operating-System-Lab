@@ -99,6 +99,7 @@ struct core_map_entry *get_random_user_page();
 void acquire_core_map_lock(void);
 void release_core_map_lock(void);
 
+
 // kbd.c
 void kbdintr(void);
 

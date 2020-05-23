@@ -78,7 +78,6 @@ void trap(struct trap_frame *tf) {
   default:
     addr = rcr2(); 
     /////////////////////////////////////////////////
-    assert(addr % PGSIZE == 0);
     
     if (tf->trapno == TRAP_PF) { //if page fault
       num_page_faults += 1;
@@ -95,16 +94,16 @@ void trap(struct trap_frame *tf) {
       struct core_map_entry* entry = (struct core_map_entry *)pa2page(vpi->ppn<<PT_SHIFT);
 
       if(vpi->cow_page==true && entry->ref_count > 1 && vpi->writable==0){ //references to unwritable page 
-        //acquire_core_map_lock();
         //allocate a page
         char* data = kalloc();
-	if(!data) // kalloc fails 
+	if(!data){ // kalloc fails 
 	  break;
-
+        }
         //copy the data from the copy-on-write page
         memmove(data, P2V(vpi->ppn << PT_SHIFT), PGSIZE);
-
+        acquire_core_map_lock();
         entry->ref_count--;   	// ref count decrement   
+        release_core_map_lock();
 	vpi->used = 1; //page is in use
         vpi->writable = VPI_WRITABLE;//make vpi writable
 	vpi->present = VPI_PRESENT; // in physical memory
@@ -115,7 +114,6 @@ void trap(struct trap_frame *tf) {
 	vspaceinvalidate(&myproc()->vspace);
 	vspaceinstall(myproc());
 
-        //release_core_map_lock();
         break;
       } else if(vpi->cow_page==true && entry->ref_count == 1 && vpi->writable==0){ //only reference to unwritable page 
 	vpi->writable = VPI_WRITABLE;//make vpi writable

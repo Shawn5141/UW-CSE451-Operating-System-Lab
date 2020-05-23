@@ -20,6 +20,7 @@ struct vpage_info {
   short present;  // whether the page is in physical memory
   short writable; // does the page have write permissions
   // user defined fields
+  bool cow_page; // copy on write page
 
 };
 

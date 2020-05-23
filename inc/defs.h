@@ -30,16 +30,16 @@ extern int crashn;
 #define _xk_str(x) #x
 #define __xk_str(x) _xk_str(x)
 
-#define assert(x)		\
-	do { \
-    if (!(x)) \
-      panic("assertion failed: '" #x "' at " __FILE__ ":" __xk_str(__LINE__)); \
+#define assert(x)\
+  do { \
+  if (!(x)) \
+    panic("assertion failed: '" #x "' at " __FILE__ ":" __xk_str(__LINE__)); \
   } while (0)
 
-#define assertm(x, msg)		\
-	do { \
-    if (!(x)) \
-      panic("assertion failed: '" msg "' at " __FILE__ ":" __xk_str(__LINE__)); \
+#define assertm(x, msg)\
+  do { \
+  if (!(x)) \
+    panic("assertion failed: '" msg "' at " __FILE__ ":" __xk_str(__LINE__)); \
   } while (0)
 
 // bio.c
@@ -96,6 +96,8 @@ void mem_init(void *);
 void mark_user_mem(uint64_t, uint64_t);
 void mark_kernel_mem(uint64_t);
 struct core_map_entry *get_random_user_page();
+void acquire_core_map_lock(void);
+void release_core_map_lock(void);
 
 // kbd.c
 void kbdintr(void);

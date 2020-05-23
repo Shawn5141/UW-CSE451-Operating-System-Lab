@@ -101,7 +101,7 @@ vregionaddmap(struct vregion *vr, uint64_t from_va, uint64_t sz, short present, 
   }
   return sz;
 
-addmap_failure:
+ addmap_failure:
   for (a -= PGSIZE; a >= PGROUNDUP(from_va); a -= PGSIZE) {
     assertm(vpi = va2vpage_info(vr, a), "vpi info missing");
     kfree(P2V(vpi->ppn << PT_SHIFT));
@@ -116,7 +116,6 @@ addmap_failure:
 
 
 // Adds a mapping into the vregion at va of size sz with the given permissions and then 
-// copies the data present in data to these addresses
 static int
 vradddata(struct vregion *r, uint64_t va, char *data, int sz, short present, short writable)
 {
@@ -168,9 +167,9 @@ vspaceinitcode(struct vspace *vs, char *init, uint64_t size)
   vs->regions[VR_CODE].va_base = 0;
   vs->regions[VR_CODE].size = PGROUNDUP(size);
   assertm(
-    vradddata(&vs->regions[VR_CODE], 0, init, size, VPI_PRESENT, VPI_WRITABLE) == 0,
+	  vradddata(&vs->regions[VR_CODE], 0, init, size, VPI_PRESENT, VPI_WRITABLE) == 0,
     "failed to allocate init code data"
-  );
+	  );
 
   // add the stack
   // make room for the stack and (implied) guard
@@ -179,8 +178,8 @@ vspaceinitcode(struct vspace *vs, char *init, uint64_t size)
   vs->regions[VR_USTACK].va_base = stack;
   vs->regions[VR_USTACK].size = PGSIZE;
   assert(
-    vregionaddmap(&vs->regions[VR_USTACK], stack - PGSIZE, PGSIZE, VPI_PRESENT, VPI_WRITABLE) >= 0
-  );
+	 vregionaddmap(&vs->regions[VR_USTACK], stack - PGSIZE, PGSIZE, VPI_PRESENT, VPI_WRITABLE) >= 0
+	 );
 
   vspaceinvalidate(vs);
 }
@@ -227,14 +226,14 @@ vspaceloadcode(struct vspace *vs, char *path, uint64_t *rip)
       goto elf_failure;
 
     if((sz = vregionaddmap(&vs->regions[VR_CODE], (uint64_t)va, ph.vaddr + ph.memsz, VPI_PRESENT, VPI_WRITABLE)) < 0)
-     goto elf_failure;
+      goto elf_failure;
     if(ph.vaddr % PGSIZE != 0)
       goto elf_failure;
 
     va += sz;
 
     if(vrloaddata(&vs->regions[VR_CODE], ph.vaddr, ip, ph.off, ph.filesz) < 0)
-     goto elf_failure;
+      goto elf_failure;
   }
 
   // Set end bound;
@@ -247,7 +246,7 @@ vspaceloadcode(struct vspace *vs, char *path, uint64_t *rip)
   irelease(ip);
   *rip = elf.entry;
   return sz;
-elf_failure:
+ elf_failure:
   if(ip) {
     unlocki(ip);
     irelease(ip);
@@ -456,7 +455,7 @@ static int
 copy_vpi_page(struct vpi_page **dst, struct vpi_page *src)
 {
   int i;
-  char *data;
+  //char *data;
   struct vpage_info *srcvpi, *dstvpi;
 
   if (!src) {
@@ -475,11 +474,20 @@ copy_vpi_page(struct vpi_page **dst, struct vpi_page *src)
     if (srcvpi->used) {
       dstvpi->used = srcvpi->used;
       dstvpi->present = srcvpi->present;
-      dstvpi->writable = srcvpi->writable;
-      if (!(data = kalloc()))
-        return -1;
-      memmove(data, P2V(srcvpi->ppn << PT_SHIFT), PGSIZE);
-      dstvpi->ppn = PGNUM(V2P(data));
+      dstvpi->writable = 0; //Read only
+      dstvpi->ppn = srcvpi->ppn;
+      srcvpi->cow_page = true ; //where to turn it off
+      dstvpi->cow_page = true ;
+      //if (!(data = kalloc()))
+      //  return -1;
+      //memmove(data, P2V(srcvpi->ppn << PT_SHIFT), PGSIZE);
+      //Need to increase ref count 
+      //acquire_core_map_lock();
+      struct core_map_entry* entry = (struct core_map_entry *)pa2page(dstvpi->ppn<<PT_SHIFT);
+      entry->ref_count++;
+      //release_core_map_lock();
+      //Assign to same pysical page 
+
     }
   }
 
@@ -575,9 +583,9 @@ vspacedumpstack(struct vspace *vs) {
   starting_va = vr->va_base - sizeof(uint64_t);
   ending_va = max(vr->va_base - vr->size, vr->va_base - words * (sizeof(uint64_t)));
   vpi = va2vpage_info(vr, starting_va);
-	
+  
   cprintf("dumping stack: base=%p size=%d\n", vr->va_base, vr->size);
-	
+  
   for (uint64_t va = starting_va; va >= ending_va; va -= sizeof(uint64_t)) {
     uint64_t la = (uint64_t) P2V(vpi->ppn << PT_SHIFT) + (va % PGSIZE);
     memmove(&data, (void *) la, sizeof(uint64_t));
@@ -596,7 +604,7 @@ vspacedumpcode(struct vspace*vs) {
   
   starting_va = vr->va_base;
   vpi = va2vpage_info(vr, starting_va);
-	
+  
   cprintf("dumping code: base=%p size=%d\n", vr->va_base, vr->size);
   int va = starting_va;
   while(vpi && vpi->used) {

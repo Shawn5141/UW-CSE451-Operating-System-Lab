@@ -16,6 +16,8 @@ uint ticks;
 
 int num_page_faults = 0;
 
+int growuserstack(void);
+
 void tvinit(void) {
   int i;
 
@@ -74,11 +76,67 @@ void trap(struct trap_frame *tf) {
     break;
 
   default:
-    addr = rcr2();
-
-    if (tf->trapno == TRAP_PF) {
+    addr = rcr2(); 
+    /////////////////////////////////////////////////
+    assert(addr % PGSIZE == 0);
+    
+    if (tf->trapno == TRAP_PF) { //if page fault
       num_page_faults += 1;
+      
+      // Generate vregion and vpage_info
+      struct vregion *vr;
+      struct vpage_info *vpi;
+      vr = va2vregion(&myproc()->vspace, addr);
+      assert(vr);
+      vpi = va2vpage_info(vr, addr);
+      assert(vpi);
 
+
+      struct core_map_entry* entry = (struct core_map_entry *)pa2page(vpi->ppn<<PT_SHIFT);
+
+      if(vpi->cow_page==true && entry->ref_count > 1 && vpi->writable==0){ //references to unwritable page 
+        //acquire_core_map_lock();
+        //allocate a page
+        char* data = kalloc();
+	if(!data) // kalloc fails 
+	  break;
+
+        //copy the data from the copy-on-write page
+        memmove(data, P2V(vpi->ppn << PT_SHIFT), PGSIZE);
+
+        entry->ref_count--;   	// ref count decrement   
+	vpi->used = 1; //page is in use
+        vpi->writable = VPI_WRITABLE;//make vpi writable
+	vpi->present = VPI_PRESENT; // in physical memory
+        vpi->cow_page = false;         //make vpi non_cow_page
+        //faulting process start writing to that freshly-allocated page
+        vpi->ppn = PGNUM(V2P(data)); 
+
+	vspaceinvalidate(&myproc()->vspace);
+	vspaceinstall(myproc());
+
+        //release_core_map_lock();
+        break;
+      } else if(vpi->cow_page==true && entry->ref_count == 1 && vpi->writable==0){ //only reference to unwritable page 
+	vpi->writable = VPI_WRITABLE;//make vpi writable
+        vpi->cow_page = false;         //make vpi non_cow_page
+
+	vspaceinvalidate(&myproc()->vspace);
+	vspaceinstall(myproc());
+        //release_core_map_lock();
+	break;
+
+      }
+
+      //GROW U STACK ON DEMAND
+      // upon hardware exception, exception handler will add memory to the stack region and resume execution
+      //check if addr > stack_base -10
+      if(addr <= SZ_2G && addr >= SZ_2G - 10 * PGSIZE) {
+	if(growuserstack() != -1) //grow stack
+	  break; // resume execution
+	// else normal page fault - can't handle
+      }
+      
       if (myproc() == 0 || (tf->cs & 3) == 0) {
         // In kernel, it must be our mistake.
         cprintf("unexpected trap %d from cpu %d rip %lx (cr2=0x%x)\n",
@@ -110,4 +168,26 @@ void trap(struct trap_frame *tf) {
   // Check if the process has been killed since we yielded
   if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
     exit();
+}
+
+int growuserstack(void) {
+  // similar to sbrk, but growing stack not heap 
+  int res = 0;
+  struct proc *p = myproc();
+  struct vregion * vr = &p->vspace.regions[VR_USTACK];
+
+  uint64_t old_bound = vr->va_base - vr->size - PGSIZE;
+
+  //if stack already at max 10 pages
+  if(vr->size >= 10 * PGSIZE)
+    return -1;
+
+  // try to add new page to user stack
+  if ((res = vregionaddmap(vr,old_bound, PGSIZE,VPI_PRESENT,VPI_WRITABLE))<0)
+    return -1;
+
+  vr->size += PGSIZE;
+
+  vspaceinvalidate(&p->vspace);
+  return old_bound;
 }

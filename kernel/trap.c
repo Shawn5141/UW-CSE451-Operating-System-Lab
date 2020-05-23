@@ -85,11 +85,8 @@ void trap(struct trap_frame *tf) {
       // Generate vregion and vpage_info
       struct vregion *vr;
       struct vpage_info *vpi;
-      vr = va2vregion(&myproc()->vspace, addr);
-      assert(vr);
-      vpi = va2vpage_info(vr, addr);
-      assert(vpi);
-
+      if((vr= va2vregion(&myproc()->vspace,addr))!=0
+        && (vpi =va2vpage_info(vr,addr))!=0 ){
 
       struct core_map_entry* entry = (struct core_map_entry *)pa2page(vpi->ppn<<PT_SHIFT);
 
@@ -121,11 +118,10 @@ void trap(struct trap_frame *tf) {
 
 	vspaceinvalidate(&myproc()->vspace);
 	vspaceinstall(myproc());
-        //release_core_map_lock();
 	break;
 
       }
-
+   }
       //GROW U STACK ON DEMAND
       // upon hardware exception, exception handler will add memory to the stack region and resume execution
       //check if addr > stack_base -10

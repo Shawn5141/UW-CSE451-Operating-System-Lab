@@ -14,8 +14,10 @@ exit:
 	  jmp exit
 
 init:
+<<<<<<< HEAD
 	  //.string "/lab3init\0"
-       	  .string "/init\0"
+	.string "/lab3init\0"
+	//.string "/init\0"
 
 	.p2align 2
 argv:

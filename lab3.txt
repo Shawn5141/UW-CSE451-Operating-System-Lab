@@ -4,33 +4,47 @@ Student: Jazmine Redmond
 Question #1:
 Why might an application prefer using malloc and free instead of using sbrk directly?
 
+While malloc/free sit on top of sbrk, there is a separation of duties between these functions. sbrk is a system call in the kernel that allocates an additional chunk of space on behalf of the process. Therefore sbrk does not have a very user-friendly interface when the user wants to allocate or free bytes.
+malloc and free are standardized as part of the C language and they manage this space from the user level. They are also easier to use in threaded programs, allows memory to be allocated in small units, and allow the deallocation of blocks of memory. These functions also have less system call overhead.
+malloc can sometimes expand the heap size more than desired since it rounds up the requested size to the proper number of header-sized units. This means that the next instruction that could need more heap memory would not need to ask for more thus reducing the number of system calls and improving efficiency. 
+
 
 Question #2:
 Explain how the file descriptors of ls and wc change when the user types ls | wc in xk's shell.
+
+When a user types this pipe is called which creates a new pipe and returns a pair of file descriptors, one for reading and one for writing. The first argument ls writes to the pipe and the second argument wc reads from it.
+After forking twice, the first child will close its stdout file and replace it with the write file descriptor of the pipe, then exec ls. The second child will close its stdin file, set the file descriptor to the read end of the pipe, and exec wc.
 
 
 Question #3:
 When a syscall completes, user-level execution resumes with the instruction immediately after the syscall.  When a page fault exception completes, where does user-level execution resume?
 
+After a page fault the user-level execution resumes at the instruction that caused the page fault. It tries to re-execute after the page fault was handled
+
+
 Question #4:
 How should the kernel decide whether an unmapped reference is a normal stack operation versus a stray pointer dereference that
 should cause the application to halt? What should happen, for example, if an application calls a procedure with a local variable that is an array of a million integers?
 
+The stack will be addresses between SZ_2G - 10 * PGSIZE <= addr < SZ_2G. The kernel can examine the address being dereferenced, so if it is within the specified range then it is valid. Otherwise it is a stray pointer
+
 
 Question #5:
-Is it possible to reduce the user stack size at
-run-time (i.e., to deallocate the user stack when a procedure with a
-large number of local variables goes out of scope)?  If so, sketch how that
-might work.
+Is it possible to reduce the user stack size at run-time (i.e., to deallocate the user stack when a procedure with a large number of local variables goes out of scope)?  If so, sketch how that might work.
+
+Yes this is possible. We can use an implementation similar to growing the user stack in part 3 of this lab. We can check the stack base pointer and if the lowest address of the stack is smaller than PGROUNDDOWN(rsp). From here we can deallocate the pages we don't intend on using.
 
 
 Question #6:
 The TLB caches the page table entries of recently referenced
-pages.  When you modify the page table entry to allow write access,
-how does xk ensure that the TLB does not have a stale version of the cache?
+pages.  When you modify the page table entry to allow write access, how does xk ensure that the TLB does not have a stale version of the cache?
+
+xk calls vspaceinvalidate() and vspaceinstall(). This will update and reinstall the page table of the current process's vpsace. It flushes the TLB so it won't contain a stale version of the cache.
 
 
 Question #7
 For each member of the project team, how many hours did you
 spend on this lab?
 
+Shawn: 25-30
+Jazmine: 30-35 

@@ -74,14 +74,12 @@ void runcmd(struct cmd *cmd) {
     if (ecmd->argv[0] == 0)
       exit();
     exec(ecmd->argv[0], ecmd->argv);
-    printf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
 
   case REDIR:
     rcmd = (struct redircmd *)cmd;
     close(rcmd->fd);
     if (open(rcmd->file, rcmd->mode) < 0) {
-      printf(2, "open %s failed\n", rcmd->file);
       exit();
     }
     runcmd(rcmd->cmd);
@@ -159,7 +157,8 @@ int main(void) {
       continue;
     }
     if (fork1() == 0){
-      runcmd(parsecmd(buf));
+      struct cmd *cmdptr=parsecmd(buf);
+      runcmd(cmdptr);
     }
     wait();
   }
@@ -219,7 +218,6 @@ struct cmd *pipecmd(struct cmd *left, struct cmd *right) {
 
 struct cmd *listcmd(struct cmd *left, struct cmd *right) {
   struct listcmd *cmd;
-
   cmd = malloc(sizeof(*cmd));
   memset(cmd, 0, sizeof(*cmd));
   cmd->type = LIST;
@@ -420,8 +418,9 @@ struct cmd *nulterminate(struct cmd *cmd) {
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
 
-  if (cmd == 0)
+  if (cmd == 0){
     return 0;
+  }
 
   switch (cmd->type) {
   case EXEC:
@@ -455,3 +454,4 @@ struct cmd *nulterminate(struct cmd *cmd) {
   }
   return cmd;
 }
+

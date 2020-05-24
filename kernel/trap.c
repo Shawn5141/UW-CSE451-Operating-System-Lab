@@ -80,16 +80,62 @@ void trap(struct trap_frame *tf) {
 
     if (tf->trapno == TRAP_PF) { //if page fault
       num_page_faults += 1;
+      
+      // Generate vregion and vpage_info
+      struct vregion *vr;
+      struct vpage_info *vpi;
+      if((vr= va2vregion(&myproc()->vspace,addr))!=0
+        && (vpi =va2vpage_info(vr,addr))!=0 ){
 
+      struct core_map_entry* entry = (struct core_map_entry *)pa2page(vpi->ppn<<PT_SHIFT);
+
+      if(vpi->cow_page==true && entry->ref_count > 1 && vpi->writable==0){ //references to unwritable page 
+        //allocate a page
+        char* data = kalloc();
+	if(!data){ // kalloc fails 
+	  break;
+        }
+
+	memset(data, 0, PGSIZE);
+        //copy the data from the copy-on-write page
+        memmove(data, P2V(vpi->ppn << PT_SHIFT), PGSIZE);
+	acquire_core_map_lock();
+        entry->ref_count--;   	// ref count decrement   
+	//        release_core_map_lock();
+	vpi->used = 1; //page is in use
+        vpi->writable = VPI_WRITABLE;//make vpi writable
+	vpi->present = VPI_PRESENT; // in physical memory
+        vpi->cow_page = false;         //make vpi non_cow_page
+        //faulting process start writing to that freshly-allocated page
+        vpi->ppn = PGNUM(V2P(data)); 
+	release_core_map_lock();
+
+	vspaceinvalidate(&myproc()->vspace);
+	vspaceinstall(myproc());
+
+        break;
+      } else if(vpi->cow_page==true && entry->ref_count == 1 && vpi->writable==0){ //only reference to unwritable page 
+	acquire_core_map_lock();
+	vpi->writable = VPI_WRITABLE;//make vpi writable
+        vpi->cow_page = false;         //make vpi non_cow_page
+	release_core_map_lock();
+
+
+	vspaceinvalidate(&myproc()->vspace);
+	vspaceinstall(myproc());
+	break;
+
+      }
+   }
       //GROW U STACK ON DEMAND
       // upon hardware exception, exception handler will add memory to the stack region and resume execution
       //check if addr > stack_base -10
       if(addr <= SZ_2G && addr >= SZ_2G - 10 * PGSIZE) {
-	if(growuserstack() == 0) //grow stack
+	if(growuserstack() != -1) //grow stack
 	  break; // resume execution
 	// else normal page fault - can't handle
       }
-
+      
       if (myproc() == 0 || (tf->cs & 3) == 0) {
         // In kernel, it must be our mistake.
         cprintf("unexpected trap %d from cpu %d rip %lx (cr2=0x%x)\n",
@@ -129,18 +175,18 @@ int growuserstack(void) {
   struct proc *p = myproc();
   struct vregion * vr = &p->vspace.regions[VR_USTACK];
 
-  uint64_t old_bound = vr->va_base - vr->size;
+  uint64_t old_bound = vr->va_base - vr->size - PGSIZE;
 
   //if stack already at max 10 pages
   if(vr->size >= 10 * PGSIZE)
     return -1;
 
   // try to add new page to user stack
-  if ((res = vregionaddmap(vr,old_bound - PGSIZE, PGSIZE,VPI_PRESENT,VPI_WRITABLE))<0)
+  if ((res = vregionaddmap(vr,old_bound, PGSIZE,VPI_PRESENT,VPI_WRITABLE))<0)
     return -1;
 
   vr->size += PGSIZE;
 
   vspaceinvalidate(&p->vspace);
-  return 0;
+  return old_bound;
 }

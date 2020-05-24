@@ -20,6 +20,7 @@ struct {
 } ptable;
 
 static struct proc *initproc;
+
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -118,7 +119,7 @@ void userinit(void) {
 //sbrk
 int sbrk(int n){
   //  cprintf("ENTERED SBRK\n");
-int res = 0;
+  int res = 0;
   struct proc *p = myproc();
   struct vregion * vr = &p->vspace.regions[VR_HEAP];
   // kernel allocates memory on behalf of the user using kalloc or kfree
@@ -160,6 +161,9 @@ int fork(void) {
   // User memory must be duplicated via `vspacecopy`
   vspacecopy(&p->vspace,&myproc()->vspace);
 
+  vspaceinvalidate(&p->vspace);
+  vspaceinstall(myproc());
+  
   // The trapframe must be duplicated in the new process
   //copy parent trap frame to child
   memmove(p->tf, myproc()->tf, sizeof(*p->tf)); //sizeof trapframe struct?
@@ -168,9 +172,7 @@ int fork(void) {
     acquire(&ptable.lock);
     if(myproc()->pftable[i] != NULL) {
       p->pftable[i] = &(*(myproc()->pftable[i]));
-      //if(p->pftable[i]->isPipe) cprintf("\nbefore forking %d with ref num = %d\t ",i,p->pftable[i]->ref);
       p->pftable[i]->ref++;
-      //if(p->pftable[i]->isPipe) cprintf("after forking %d with ref num = %d\n",i,p->pftable[i]->ref);
     }
     release(&ptable.lock);
   }
@@ -181,7 +183,6 @@ int fork(void) {
   p->tf->rax = 0;
   p->parent = myproc(); //set the parent 
   release(&ptable.lock);   
-  // your code here
   
   return p->pid;
   

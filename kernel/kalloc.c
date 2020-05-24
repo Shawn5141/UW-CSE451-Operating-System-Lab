@@ -106,16 +106,23 @@ void kfree(char *v) {
     acquire(&kmem.lock);
 
   r = (struct core_map_entry *)pa2page(V2P(v));
+  
+  if(r->ref_count > 0) //multiple pointers to the page
+    r->ref_count--; //decrement
 
-  pages_in_use--;
-  free_pages++;
+  if(r->ref_count == 0) { //no pointers - delete the page
+    pages_in_use--;
+    free_pages++;
 
-  // Fill with junk to catch dangling refs.
-  memset(v, 2, PGSIZE);
+    // Fill with junk to catch dangling refs.
+    memset(v, 2, PGSIZE);
 
-  r->available = 1;
-  r->user = 0;
-  r->va = 0;
+    r->available = 1;
+    r->user = 0;
+    r->va = 0;
+    r->ref_count = 0; // should already be 0
+  
+  }
   if (kmem.use_lock)
     release(&kmem.lock);
 }
@@ -141,6 +148,8 @@ mark_kernel_mem(uint64_t pa)
 }
 
 char *kalloc(void) {
+  pages_in_use++;
+  free_pages--;
 
   int i;
 
@@ -150,8 +159,10 @@ char *kalloc(void) {
   for (i = 0; i < npages; i++) {
     if (core_map[i].available == 1) {
       core_map[i].available = 0;
-      pages_in_use++;
-      free_pages--;
+
+      core_map[i].ref_count=1; //TODO do we need locks?
+      //      pages_in_use++;
+      //free_pages--;
       if (kmem.use_lock)
         release(&kmem.lock);
       return P2V(page2pa(&core_map[i]));
@@ -188,4 +199,15 @@ struct core_map_entry * get_random_user_page() {
     }
   }
   panic("Tried 100 random indices for random user page, all failed");
+}
+
+void acquire_core_map_lock(void){
+  if(kmem.use_lock)
+    acquire(&kmem.lock);
+}
+
+void release_core_map_lock(void){
+  if(kmem.use_lock){
+    release(&kmem.lock);
+  }
 }

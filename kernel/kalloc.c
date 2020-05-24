@@ -148,8 +148,8 @@ mark_kernel_mem(uint64_t pa)
 }
 
 char *kalloc(void) {
-  pages_in_use++;
-  free_pages--;
+  //pages_in_use++;
+  //free_pages--;
 
   int i;
 
@@ -159,10 +159,11 @@ char *kalloc(void) {
   for (i = 0; i < npages; i++) {
     if (core_map[i].available == 1) {
       core_map[i].available = 0;
-
       core_map[i].ref_count=1; //TODO do we need locks?
-      //      pages_in_use++;
-      //free_pages--;
+      
+      pages_in_use++;
+      free_pages--;
+
       if (kmem.use_lock)
         release(&kmem.lock);
       return P2V(page2pa(&core_map[i]));

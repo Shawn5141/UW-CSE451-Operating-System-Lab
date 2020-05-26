@@ -510,6 +510,7 @@ vspacecopy(struct vspace *dst, struct vspace *src)
       return -1;
 
   vspaceinvalidate(dst);
+  vspaceinvalidate(src);
   //  vspaceinstall(myproc());
   return 0;
 }

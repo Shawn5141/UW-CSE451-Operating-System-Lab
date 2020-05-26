@@ -161,8 +161,7 @@ int fork(void) {
   // User memory must be duplicated via `vspacecopy`
   vspacecopy(&p->vspace,&myproc()->vspace);
 
-  vspaceinvalidate(&p->vspace);
-  vspaceinstall(myproc());
+  //vspaceinvalidate(&p->vspace);
   
   // The trapframe must be duplicated in the new process
   //copy parent trap frame to child
@@ -184,6 +183,7 @@ int fork(void) {
   p->parent = myproc(); //set the parent 
   release(&ptable.lock);   
   
+  vspaceinstall(myproc());
   return p->pid;
   
 }

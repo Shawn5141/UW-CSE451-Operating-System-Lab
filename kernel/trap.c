@@ -130,7 +130,7 @@ void trap(struct trap_frame *tf) {
       //GROW U STACK ON DEMAND
       // upon hardware exception, exception handler will add memory to the stack region and resume execution
       //check if addr > stack_base -10
-      if(addr <= SZ_2G && addr >= SZ_2G - 10 * PGSIZE) {
+      if(addr < SZ_2G && addr >= SZ_2G - 10 * PGSIZE) {
 	if(growuserstack() != -1) //grow stack
 	  break; // resume execution
 	// else normal page fault - can't handle

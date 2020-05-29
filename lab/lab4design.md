@@ -24,9 +24,11 @@
 ## In-depth Analysis and Implementation
 
 ### Disk File Write Enable  
-- modify `kernel/file.c` to add cases for `O_WRONLY` AND `O_RDWR` 
-### Disk File Append
+- modify `kernel/file.c` to add cases for `O_WRONLY` AND `O_RDWR` (also for open in file.c)
 - modify `writei` in `kernel/fs.c` so an inode can be used to write to disk
+- use bread, bwrite, brelse to write to block (refer to readi)
+
+### Disk File Append
 - allocate additional space for the file. Use bitmap to find continuous blocks
 
 ### Disk File Create
@@ -46,12 +48,13 @@
 - use `bread` and `bwrite` interfaces
 - implement helper fuctions `begin_tx()`and `commit_tx()` to update the log header on disk
 - implement wrapper function `log_write` to write to the log region
+- implement log_recover for replay log into disk
 
 ## Risk Analysis
 
 ## Unanswered Questions
 - recover the transaction?
-
+- Function and number of dirty_bits(B_DIRTY)
 ## Time Estimation
 
 - Disk Write Enable:               5 hr

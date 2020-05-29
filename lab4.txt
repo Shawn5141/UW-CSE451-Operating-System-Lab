@@ -1,0 +1,11 @@
+Question #1
+Explain how dirlookup works.
+
+
+Question #8
+File delete is not a required feature in lab4. Describe how you can implement
+it in a crash-safe manner even if the file spans multiple blocks.
+
+
+Question #9
+For each member of the project team, how many hours did you spend on this lab?

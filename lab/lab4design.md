@@ -55,6 +55,7 @@
 ## Unanswered Questions
 - recover the transaction?
 - Function and number of dirty_bits(B_DIRTY)
+- How to ensure that Copy-On-Write traps are allowed in Kernel mode
 ## Time Estimation
 
 - Disk Write Enable:               5 hr

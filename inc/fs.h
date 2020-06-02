@@ -27,7 +27,7 @@ struct dinode {
   short type;         // File type
   short devid;        // Device number (T_DEV only)
   uint size;          // Size of file (bytes)
-  struct extent data; // Data blocks of file on disk
+  struct extent data[10]; // Data blocks of file on disk TODO Code Review: statically allocate 10 extend
   char pad[46];       // So disk inodes fit contiguosly in a block
 };
 

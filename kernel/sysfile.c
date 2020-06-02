@@ -129,8 +129,8 @@ int sys_open(void) {
     return -1;
 
   //O_CREATE mode not supported for this lab 
-  if(mode == O_CREATE) 
-    return -1;
+  //if(mode == O_CREATE) 
+  //  return -1;
 
   //call appropriate file function
   //  acquire(&ftable.lock);

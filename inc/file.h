@@ -14,7 +14,7 @@ struct inode {
   short type; // copy of disk inode
   short devid;
   uint size;
-  struct extent data;
+  struct extent data[10]; //TODO code review: statically allocate 10 extend
 };
 
 // table mapping device ID (devid) to device functions

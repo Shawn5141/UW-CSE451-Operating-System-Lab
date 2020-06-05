@@ -303,7 +303,24 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
     return devsw[ip->devid].write(ip, src, n);
   }
   // read-only fs, writing to inode is an error
-  return -1;
+  
+
+//TODO Need to check if we need this condition 
+//  if (off > ip->size || off + n < off)
+  //   return -1;
+  if (off + n > ip->size)
+     n = ip->size - off; 
+  
+  struct buf* bp;
+  uint tot,m;
+  for (tot = 0; tot < n; tot += m, off += m, src += m) {
+    bp =bread(ip->dev,ip->data.startblkno+off/BSIZE);
+    m = min(n - tot, BSIZE - off % BSIZE);
+    memmove(bp->data + off % BSIZE,src, m);
+    bwrite(bp);
+    brelse(bp); 
+    }
+    return n;   
 }
 
 // Directories

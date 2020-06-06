@@ -126,11 +126,11 @@ main(int argc, char *argv[])
 
   // setup inode file data area
   rinode(inodefileino, &din);
-  din.data.startblkno = sb.inodestart;
+  din.data->startblkno = sb.inodestart;
   inodefileblkn = inum_count/IPB;
   if (inodefileblkn == 0 || (inum_count * sizeof(struct dinode) % BSIZE))
     inodefileblkn++;
-  din.data.nblocks = xint(inodefileblkn);
+  din.data->nblocks = xint(inodefileblkn);
   din.size = xint(inum_count * sizeof(struct dinode));
   winode(inodefileino, &din);
 
@@ -197,19 +197,19 @@ main(int argc, char *argv[])
     iappend(rootino, &de, sizeof(de));
 
     rinode(inum, &din);
-    din.data.startblkno = xint(freeblock);
+    din.data->startblkno = xint(freeblock);
 		winode(inum, &din);
 
     while((cc = read(fd, buf, sizeof(buf))) > 0)
       iappend(inum, buf, cc);
 
     rinode(inum, &din);
-    din.data.nblocks = xint(xint(din.size) / BSIZE + (xint(din.size) % BSIZE == 0 ? 0 : 1));
-    freeblock += xint(din.data.nblocks);
+    din.data->nblocks = xint(xint(din.size) / BSIZE + (xint(din.size) % BSIZE == 0 ? 0 : 1));
+    freeblock += xint(din.data->nblocks);
     winode(inum, &din);
 
 		printf("inum: %d name: %s size %d start: %d nblocks: %d\n",
-        inum, name, xint(din.size), xint(din.data.startblkno), xint(din.data.nblocks));
+        inum, name, xint(din.size), xint(din.data->startblkno), xint(din.data->nblocks));
     close(fd);
   }
 
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 
   rinode(inum, &din);
   printf("inum: %d size %d start: %d nblocks: %d\n",
-      inum,xint(din.size), xint(din.data.startblkno), xint(din.data.nblocks));
+      inum,xint(din.size), xint(din.data->startblkno), xint(din.data->nblocks));
 
   balloc(freeblock);
 
@@ -321,8 +321,8 @@ void
 iallocblocks(uint inum, int start, int numblks) {
   struct dinode din;
   rinode(inum, &din);
-  din.data.startblkno = xint(start);
-  din.data.nblocks = xint(numblks);
+  din.data->startblkno = xint(start);
+  din.data->nblocks = xint(numblks);
   winode(inum, &din);
 }
 
@@ -340,9 +340,9 @@ iappend(uint inum, void *xp, int n)
   while(n > 0){
     fbn = off / BSIZE;
     n1 = min(n, (fbn + 1) * BSIZE - off);
-    rsect(xint(din.data.startblkno) + fbn, buf);
+    rsect(xint(din.data->startblkno) + fbn, buf);
     bcopy(p, buf + off - (fbn * BSIZE), n1);
-    wsect(xint(din.data.startblkno) + fbn, buf);
+    wsect(xint(din.data->startblkno) + fbn, buf);
     n -= n1;
     off += n1;
     p += n1;

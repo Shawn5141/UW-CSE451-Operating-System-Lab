@@ -264,6 +264,7 @@ int concurrent_readi(struct inode *ip, char *dst, uint off, uint n) {
 int readi(struct inode *ip, char *dst, uint off, uint n) {
   uint tot, m;
   struct buf *bp;
+  //cprintf("enter readi | off %d read_byte = %d inum %d \n",off,n,ip->inum);
 
   if (!holdingsleep(&ip->lock))
     panic("not holding lock");
@@ -276,14 +277,32 @@ int readi(struct inode *ip, char *dst, uint off, uint n) {
 
   if (off > ip->size || off + n < off)
     return -1;
-  if (off + n > ip->size)
-    n = ip->size - off;
+   //TODO need to double check
+  //if (off + n > ip->size)
+   // n = ip->size - off;
   
-  for (tot = 0; tot < n; tot += m, off += m, dst += m) {
-    bp = bread(ip->dev,ip->data[0].startblkno + off / BSIZE);
-    m = min(n - tot, BSIZE - off % BSIZE);
-    memmove(dst, bp->data + off % BSIZE, m);
+   struct extent *data = ip->data;
+  uint size = 0;
+  m = 0;
+
+  // Move to the extent where offset is located.
+     while (size + data->nblocks * BSIZE < off) {
+          size += data->nblocks * BSIZE;
+          data++;
+       }
+  // Offset for the specific extent.
+     size = off - size;
+  for (tot = 0; tot < n; tot += m, off += m, dst += m,size += m) {
+    if (size < data->nblocks * BSIZE) {
+    bp = bread(ip->dev,data->startblkno + size / BSIZE);
+    m = min(n - tot, BSIZE - size % BSIZE);
+    memmove(dst, bp->data + size % BSIZE, m);
     brelse(bp);
+  }else{
+      data++;
+      m = 0;
+      size = off - size;
+    }
   }
   return n;
 }
@@ -317,7 +336,6 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
 //TODO Need to check if we need this condition 
 //  if (off > ip->size || off + n < off)
   //   return -1;
-  cprintf("enter writei=====try to write %d byte with %s \n",n,src);
   int i=0;
   uint size = 0;
   struct extent* data = ip->data;
@@ -325,9 +343,7 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
     size+=data->nblocks*BSIZE;
     data++;
   }
-  cprintf("size= %d offset =%d \n",size,off);
     size=off-size; 
-  cprintf("size= %d offset =%d \n",size,off);
   struct buf* bp;
   uint tot,m;
   for (tot = 0; tot < n; tot += m, off += m, src += m,size+=m) {
@@ -335,9 +351,7 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
    if (size < data->nblocks * BSIZE) {
       bp =bread(ip->dev,data->startblkno+off/BSIZE);
       m = min(n - tot, BSIZE - size % BSIZE);
-      cprintf("after bread \nbp =%s ",bp->data);
       memmove(bp->data + size % BSIZE,src, m);
-      cprintf("after memmvoe \nbp=%s",bp->data);
       bwrite(bp);
       brelse(bp); 
     }else{
@@ -346,7 +360,6 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
       size = off - size;
     }
     }
-   cprintf("wirte %d ip->size\n",n);
     return n;   
 }
 
@@ -368,6 +381,7 @@ struct inode *dirlookup(struct inode *dp, char *name, uint *poff) {
     panic("dirlookup not DIR");
 
   for (off = 0; off < dp->size; off += sizeof(de)) {
+//    cprintf("dirlookup off %d\n ",off);
     if (readi(dp, (char *)&de, off, sizeof(de)) != sizeof(de))
       panic("dirlink read");
     if (de.inum == 0)

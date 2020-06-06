@@ -160,8 +160,9 @@ int fileread(int fd, char *buf, int bytes_read) {
    if(!f->isPipe){
      if(f->iptr==NULL)return -1;
      if(f->access_permission==O_WRONLY)return -1;
-     
+    
      // TODO need to change offset to ftable's struct in order to avoid multi tread issue
+     //cprintf("enter fileread for fd %d byte %d\n",fd,bytes_read);
      offset= concurrent_readi(f->iptr,buf,f->offset,bytes_read);  
      
      acquire(&lock);

@@ -61,7 +61,7 @@ void append(void) {
   int fd;
   int old_size;
 
-  printf(stdout, "append... old size %d\n",strlen(buf));
+  printf(stdout, "append...  %d\n",strlen(buf));
 
   old_size = strlen(buf);
   
@@ -77,7 +77,6 @@ void append(void) {
     error("read failed");
   }
   strcpy(buf, ", but this is just the beginning :(\n");
-  printf(1,"garbo %s\n",garbo);
   // overwrite the last char, and append data.
   
   n = write(fd, buf, strlen(buf) + 1);

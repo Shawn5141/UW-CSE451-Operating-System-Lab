@@ -1,11 +1,15 @@
 Question #1
 Explain how dirlookup works.
 
+dirlookup searches a directory for an entry with the given name. If it finds an entry then it returns a pointer to the corresponding inode, unlocked, and sets a uint pointer *poff to the byte offset of the entry within the directory.
+If it finds a dirent entry with the matching name, it updates *poff, releases the block, and returns an unlocked inode obtained via iget
 
 Question #8
-File delete is not a required feature in lab4. Describe how you can implement
-it in a crash-safe manner even if the file spans multiple blocks.
+File delete is not a required feature in lab4. Describe how you can implement it in a crash-safe manner even if the file spans multiple blocks.
 
 
 Question #9
 For each member of the project team, how many hours did you spend on this lab?
+
+Shawn:
+Jazmine

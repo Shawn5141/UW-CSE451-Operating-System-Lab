@@ -3,6 +3,7 @@
 #include <extent.h>
 #include <sleeplock.h>
 #include <param.h>
+#define EXTENT_N 7
 // in-memory copy of an inode
 struct inode {
   uint dev;  // Device number
@@ -14,7 +15,7 @@ struct inode {
   short type; // copy of disk inode
   short devid;
   uint size;
-  struct extent data[10]; //TODO code review: statically allocate 10 extend
+  struct extent data[EXTENT_N]; //TODO code review: statically allocate 10 extend
 };
 
 // table mapping device ID (devid) to device functions

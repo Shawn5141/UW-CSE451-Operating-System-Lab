@@ -15,7 +15,7 @@ int main(void) {
   dup(0); // stdout
   dup(0); // stderr
   printf(1, "lab3init running\n");
-  exec("lab3test", argv);
+  exec("lab4test_a", argv);
   printf(1, "lab3init: exec failed\n");
   exit();
 }

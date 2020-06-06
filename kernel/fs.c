@@ -88,8 +88,14 @@ static void init_inodefile(int dev) {
 
   icache.inodefile.devid = di.devid;
   icache.inodefile.size = di.size;
-  icache.inodefile.data = di.data;
-
+  icache.inodefile.data[0] = di.data[0];
+  
+  for(int i=1;i<EXTENT_N;i++){
+    di.data[i].startblkno = 0;
+    di.data[i].nblocks = 0;
+    icache.inodefile.data[i] = di.data[i];
+  }
+  
   brelse(b);
 }
 
@@ -202,7 +208,10 @@ void locki(struct inode *ip) {
     ip->devid = dip.devid;
 
     ip->size = dip.size;
-    ip->data = dip.data;
+    for (int i = 0; i < EXTENT_N; i++) {
+      ip->data[i] = dip.data[i];
+    }
+
 
     ip->valid = 1;
 
@@ -269,9 +278,9 @@ int readi(struct inode *ip, char *dst, uint off, uint n) {
     return -1;
   if (off + n > ip->size)
     n = ip->size - off;
-
+  
   for (tot = 0; tot < n; tot += m, off += m, dst += m) {
-    bp = bread(ip->dev, ip->data.startblkno + off / BSIZE);
+    bp = bread(ip->dev,ip->data[0].startblkno + off / BSIZE);
     m = min(n - tot, BSIZE - off % BSIZE);
     memmove(dst, bp->data + off % BSIZE, m);
     brelse(bp);
@@ -308,18 +317,36 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
 //TODO Need to check if we need this condition 
 //  if (off > ip->size || off + n < off)
   //   return -1;
-  if (off + n > ip->size)
-     n = ip->size - off; 
-  
+  cprintf("enter writei=====try to write %d byte with %s \n",n,src);
+  int i=0;
+  uint size = 0;
+  struct extent* data = ip->data;
+  while(size+data->nblocks* BSIZE<off){
+    size+=data->nblocks*BSIZE;
+    data++;
+  }
+  cprintf("size= %d offset =%d \n",size,off);
+    size=off-size; 
+  cprintf("size= %d offset =%d \n",size,off);
   struct buf* bp;
   uint tot,m;
-  for (tot = 0; tot < n; tot += m, off += m, src += m) {
-    bp =bread(ip->dev,ip->data.startblkno+off/BSIZE);
-    m = min(n - tot, BSIZE - off % BSIZE);
-    memmove(bp->data + off % BSIZE,src, m);
-    bwrite(bp);
-    brelse(bp); 
+  for (tot = 0; tot < n; tot += m, off += m, src += m,size+=m) {
+    m =0;
+   if (size < data->nblocks * BSIZE) {
+      bp =bread(ip->dev,data->startblkno+off/BSIZE);
+      m = min(n - tot, BSIZE - size % BSIZE);
+      cprintf("after bread \nbp =%s ",bp->data);
+      memmove(bp->data + size % BSIZE,src, m);
+      cprintf("after memmvoe \nbp=%s",bp->data);
+      bwrite(bp);
+      brelse(bp); 
+    }else{
+      data++;
+      m = 0;
+      size = off - size;
     }
+    }
+   cprintf("wirte %d ip->size\n",n);
     return n;   
 }
 

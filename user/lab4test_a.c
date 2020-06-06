@@ -61,7 +61,7 @@ void append(void) {
   int fd;
   int old_size;
 
-  printf(stdout, "append...\n");
+  printf(stdout, "append... old size %d\n",strlen(buf));
 
   old_size = strlen(buf);
   
@@ -77,12 +77,14 @@ void append(void) {
     error("read failed");
   }
   strcpy(buf, ", but this is just the beginning :(\n");
-
+  printf(1,"garbo %s\n",garbo);
   // overwrite the last char, and append data.
+  
   n = write(fd, buf, strlen(buf) + 1);
   if (n != strlen(buf) + 1) {
     error("Did not write entire buffer. Wanted: %d, Wrote: %d\n", strlen(buf) + 1, n);
   }
+  printf(1,"wanted: %d,wrote %d ",strlen(buf)+1,n);
   close(fd);
 
   fd = open("small.txt", O_RDWR);

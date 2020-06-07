@@ -262,7 +262,7 @@ void concurrent_createi(char *path){
  struct inode *inodefile = iget(ROOTDEV, INODEFILEINO);
   acquiresleep(&(inodefile->lock));
   createi(inodefile,path);
-  releasesleep(&(inodefile->lock));
+  //releasesleep(&(inodefile->lock));
   
 }
 
@@ -279,7 +279,7 @@ int createi(struct inode* inodefile,char* path){
   din.devid = T_DEV;
   din.size = 0;
   for (int i = 0; i < EXTENT_N; i++) {
-    din.data[i].startblkno = 0;//getfreestartblkno(inodefile->dev);
+    din.data[i].startblkno =0;//getfreestartblkno(inodefile->dev);
     //cprintf("startblkno %d\n\n",din.data[i].startblkno);
     din.data[i].nblocks = 0;
   }
@@ -289,9 +289,20 @@ int createi(struct inode* inodefile,char* path){
 
   cprintf("after write to indoefile\n");
  //4) The inum is the index of the dinode within the inodefile 
- 
+  struct inode *rootino = iget(ROOTDEV, ROOTINO);
+  struct dirent dir;
+  cprintf("after iget \n");
+  dir.inum = inodefile->size / sizeof(struct dinode);
+  safestrcpy(dir.name, path, DIRSIZ);
  //5) Use that inum to add a dirent to the directory file
- 
+  
+  cprintf("before write to rootfile\n");
+   if (writei(rootino, (char *) &dir, rootino->size, sizeof(struct dirent)) < 0)
+    cprintf("failed to add dirent in sys_open\n");
+  inodefile->size += sizeof(struct dinode);
+  rootino->size += sizeof(struct dirent);
+  
+   icache.inodefile = *inodefile; 
 return 0;
 
 }
@@ -372,8 +383,6 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
   
 
 //TODO Need to check if we need this condition 
-//  if (off > ip->size || off + n < off)
-  //   return -1;
 
 
     uint append = 0; 
@@ -594,7 +603,7 @@ uint getfreestartblkno(int dev){
        bp->data[j]=0xff;
        bwrite(bp);
        brelse(bp);
-       cprintf("bitmap free block number %d\n",j*8+i*BSIZE+sb.inodestart); 
+       //cprintf("bitmap free block number %d\n",j*8+i*BSIZE+sb.inodestart); 
        return (sb.nblocks + sb.inodestart) 
                - ((sb.inodestart - 1 - i) * BSIZE)
                - (j + 1) * 8;
@@ -616,4 +625,8 @@ uint getCapacity(struct inode *ip) {
   }
   return capacity;
 }
+
+
+
+
 

@@ -12,6 +12,7 @@
 #include <stat.h>
 #include <proc.h>
 #include <fcntl.h>
+#include <fs.h>
 //Lab1 design
 struct devsw devsw[NDEV];
 struct file_info ftable[NFILE];
@@ -20,25 +21,14 @@ int offset =0;
 //lab2 design
 struct spinlock lock;
 
+void filecreate(char*path){
+   cprintf("Enter file create Path =%s\n",path);
+
+  concurrent_createi(path);
+}
 
 int fileopen(char *path,int mode){
   
-  //Create
-  if(mode ==O_CREATE|O_RDWR){
-  //1) Find an empty slot in the inodefile (it's an array of dinodes, remember) or append to the end
-
-  //2) Look through the bitmap to find a free extents
-
-
-  //3) Use the found extents to construct a dinode and save this dinode to the place in the inodefile you found earlier
-
-  //4) The inum is the index of the dinode within the inodefile (I think, off the top of my head. Double check)
-
-
-  //5) Use that inum to add a dirent to the directory file
-
-
-  }
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
   
   struct stat istat ;  //TODO Not sure I can create local varible here like this or I need to allocate some memory

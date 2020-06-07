@@ -132,6 +132,16 @@ int sys_open(void) {
   //if(mode == O_CREATE) 
   //  return -1;
 
+  struct inode *ptr = namei(path);
+   if (mode != O_RDONLY && mode != O_WRONLY && mode != O_RDWR && mode != O_CREATE && 
+      (mode != (O_CREATE | O_RDWR))) {
+    return -1;
+  }
+
+  if ((mode & 0xF00) == O_CREATE && ptr == NULL) {
+     filecreate(path);
+  }
+
   //call appropriate file function
   //  acquire(&ftable.lock);
   fd = fileopen(path,mode);

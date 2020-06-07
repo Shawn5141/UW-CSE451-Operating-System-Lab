@@ -69,6 +69,7 @@ void ideinit(void) {
 
 // Start the request for b.  Caller must hold idelock.
 static void idestart(struct buf *b) {
+  cprintf("b->blockno %d FSSIZE %d",b->blockno,FSSIZE);
   if (b == 0)
     panic("idestart");
   if (b->blockno >= FSSIZE)

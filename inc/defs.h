@@ -76,7 +76,11 @@ void concurrent_stati(struct inode *, struct stat *);
 void stati(struct inode *, struct stat *);
 int concurrent_writei(struct inode *, char *, uint, uint);
 int writei(struct inode *, char *, uint, uint);
-
+void concurrent_createi(char*);
+int createi(struct inode*,char*);
+uint getfreestartblkno(int dev);                                                        
+int appendi(struct inode *, char *, uint );
+uint getCapacity(struct inode *ip);
 // ide.c
 void ideinit(void);
 void ideintr(void);
@@ -199,6 +203,7 @@ int argfd(int,int*);
 void syscall(void);
 
 //file.h
+void filecreate(char *path);
 int fileopen(char *path, int mode);
 int filedup(int fd);
 int fileread(int fd, char *buf, int bytes_read);

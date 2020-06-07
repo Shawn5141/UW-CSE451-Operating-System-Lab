@@ -257,6 +257,44 @@ int concurrent_readi(struct inode *ip, char *dst, uint off, uint n) {
 
   return retval;
 }
+void concurrent_createi(char *path){
+//1) Find an empty slot in the inodefile (it's an array of dinodes, remember) or append to the end 
+ struct inode *inodefile = iget(ROOTDEV, INODEFILEINO);
+  acquiresleep(&(inodefile->lock));
+  createi(inodefile,path);
+  releasesleep(&(inodefile->lock));
+  
+}
+
+// Create inode in disk
+int createi(struct inode* inodefile,char* path){
+  
+  cprintf("enter createi \n");
+//2) Look through the bitmap to find a free extente 
+
+
+//3) Use the found extents to construct a dinode and save this dinode to the place in the inodefile you found earlier 
+ struct dinode din;
+  din.type = T_FILE;
+  din.devid = T_DEV;
+  din.size = 0;
+  for (int i = 0; i < EXTENT_N; i++) {
+    din.data[i].startblkno = 0;//getfreestartblkno(inodefile->dev);
+    //cprintf("startblkno %d\n\n",din.data[i].startblkno);
+    din.data[i].nblocks = 0;
+  }
+  cprintf("write to indoefile\n");
+ if (writei(inodefile, (char *) &din, inodefile->size, sizeof(struct dinode)) < 0)
+    cprintf("failled to add dinode in sys_open\n");
+
+  cprintf("after write to indoefile\n");
+ //4) The inum is the index of the dinode within the inodefile 
+ 
+ //5) Use that inum to add a dirent to the directory file
+ 
+return 0;
+
+}
 
 // Read data from inode.
 // Returns number of bytes read.
@@ -336,6 +374,20 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
 //TODO Need to check if we need this condition 
 //  if (off > ip->size || off + n < off)
   //   return -1;
+
+
+    uint append = 0; 
+  uint capacity = getCapacity(ip);
+  if (off + n < off) 
+    return -1;
+  if (off + n > capacity) {
+    append = (off + n) - capacity;
+    n = capacity - off;
+  }
+
+
+
+
   int i=0;
   uint size = 0;
   struct extent* data = ip->data;
@@ -360,8 +412,50 @@ int writei(struct inode *ip, char *src, uint off, uint n) {
       size = off - size;
     }
     }
+    if (append > 0) {
+        return n + appendi(ip, src, append);
+  }
+
     return n;   
 }
+
+int appendi(struct inode *ip, char *src, uint append) {
+  uint tot, m;
+  struct buf *bp;
+
+  struct extent *data = ip->data;
+  uint size = 0;
+
+  while(data->nblocks != 0) {
+    data++;
+  }
+
+  for (tot = 0; tot < append; tot += m, src += m, size += m, data++) {
+    m = 0;
+
+    if (data->nblocks == 0) {
+      data->startblkno =  getfreestartblkno(ip->dev);
+      data->nblocks = 8;
+    }
+
+    if (size < data->nblocks * BSIZE) {
+      bp = bread(ip->dev, data->startblkno + size / BSIZE);
+      m = min(append - tot, BSIZE - size % BSIZE);
+      memmove(bp->data + size % BSIZE, src, m);
+      bwrite(bp);
+      brelse(bp);
+    } else {
+      data++;
+      m = 0;
+      size = 0;
+    }
+  }
+
+  //log_commit_tx();
+  return append;
+}
+
+
 
 // Directories
 
@@ -486,5 +580,40 @@ struct inode *namei(char *path) {
 
 struct inode *nameiparent(char *path, char *name) {
   return namex(path, 1, name);
+}
+
+
+uint getfreestartblkno(int dev){
+ struct buf *bp;
+  //go through bitmap
+  for (uint i = sb.inodestart - 1; i >= sb.bmapstart; i--) {
+     bp =bread(dev,i);
+   for(uint j=0;j<BSIZE;j++){
+     // if block is availble, change to 0xff marked as occupied 
+     if(bp->data[j]==0x00){
+       bp->data[j]=0xff;
+       bwrite(bp);
+       brelse(bp);
+       cprintf("bitmap free block number %d\n",j*8+i*BSIZE+sb.inodestart); 
+       return (sb.nblocks + sb.inodestart) 
+               - ((sb.inodestart - 1 - i) * BSIZE)
+               - (j + 1) * 8;
+
+      }
+      
+    }
+   brelse(bp);
+  }
+   return 0;
+
+}
+
+
+uint getCapacity(struct inode *ip) {
+  uint capacity = 0;
+  for (int i = 0; i < EXTENT_N; i++) {
+    capacity += ip->data[i].nblocks * BSIZE;
+  }
+  return capacity;
 }
 

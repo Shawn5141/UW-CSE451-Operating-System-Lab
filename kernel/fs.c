@@ -162,17 +162,6 @@ static struct inode *iget(uint dev, uint inum) {
 
   release(&icache.lock);
 
-  read_dinode(ip->inum, &dip);
-  ip->type = dip.type;
-  ip->devid = dip.devid;
-  ip->size = dip.size;
-  for (int i = 0; i < EXTENT_N; i++) {
-    ip->data[i] = dip.data[i];
-  }
-
-  if (ip->type == 0)
-    panic("iget: no type");
-
 
   return ip;
 }
@@ -222,6 +211,7 @@ void locki(struct inode *ip) {
     ip->size = dip.size;
     for (int i = 0; i < EXTENT_N; i++) {
       ip->data[i] = dip.data[i];
+      
     }
 
 
@@ -296,7 +286,7 @@ struct inode* createi(struct inode* inodefile,char* path){
     //cprintf("startblkno %d\n\n",din.data[i].startblkno);
     din.data[i].nblocks = 0;
   }
-  cprintf("write to indoefile\n");
+  cprintf("write to indoefile size %d\n");
  if (writei(inodefile, (char *) &din, inodefile->size, sizeof(struct dinode)) < 0)
     cprintf("failled to add dinode in sys_open\n");
 
@@ -337,7 +327,6 @@ void update_dinode(struct inode* ip){
  if (writei(inodefile, (char *) &curr_dinode, ip->inum * sizeof(struct dinode),
            sizeof(struct dinode)) < 0)
     cprintf("failled to add dinode in sys_open\n");
-     
 
 
   }
@@ -622,6 +611,7 @@ notfound:
 
 struct inode *namei(char *path) {
   char name[DIRSIZ];
+  cprintf("namei %s",path);
   return namex(path, 0, name);
 }
 

@@ -257,17 +257,18 @@ int concurrent_readi(struct inode *ip, char *dst, uint off, uint n) {
 
   return retval;
 }
-void concurrent_createi(char *path){
+struct inode* concurrent_createi(char *path){
 //1) Find an empty slot in the inodefile (it's an array of dinodes, remember) or append to the end 
  struct inode *inodefile = iget(ROOTDEV, INODEFILEINO);
+ struct inode *ip;
   acquiresleep(&(inodefile->lock));
-  createi(inodefile,path);
-  //releasesleep(&(inodefile->lock));
-  
+  ip = createi(inodefile,path);
+  releasesleep(&(inodefile->lock));
+  return ip;  
 }
 
 // Create inode in disk
-int createi(struct inode* inodefile,char* path){
+struct inode* createi(struct inode* inodefile,char* path){
   
   cprintf("enter createi \n");
 //2) Look through the bitmap to find a free extente 
@@ -294,6 +295,7 @@ int createi(struct inode* inodefile,char* path){
   cprintf("after iget \n");
   dir.inum = inodefile->size / sizeof(struct dinode);
   safestrcpy(dir.name, path, DIRSIZ);
+  cprintf("dir num %d  path name %s inodefile->size %d sizeof dinode %d\n ",dir.inum,path,inodefile->size,sizeof(struct dinode));
  //5) Use that inum to add a dirent to the directory file
   
   cprintf("before write to rootfile\n");
@@ -301,9 +303,34 @@ int createi(struct inode* inodefile,char* path){
     cprintf("failed to add dirent in sys_open\n");
   inodefile->size += sizeof(struct dinode);
   rootino->size += sizeof(struct dirent);
+  update_dinode(inodefile); 
+  update_dinode(rootino);
   
-   icache.inodefile = *inodefile; 
-return 0;
+  icache.inodefile = *inodefile; 
+  struct inode *ind = iget(ROOTDEV, dir.inum);
+  return ind;
+
+}
+
+void update_dinode(struct inode* ip){
+  struct inode *inodefile = iget(ROOTDEV, INODEFILEINO);
+  struct dinode curr_dinode;
+  read_dinode(ip->inum,&curr_dinode);
+  if(ip->size!=curr_dinode.size){
+     curr_dinode.size = ip->size;
+     for(int i =0;i<EXTENT_N;i++){
+        curr_dinode.data[i].startblkno = ip->data[i].startblkno;
+        curr_dinode.data[i].nblocks = ip->data[i].nblocks;
+     }
+ if (writei(inodefile, (char *) &curr_dinode, ip->inum * sizeof(struct dinode),
+           sizeof(struct dinode)) < 0)
+    cprintf("failled to add dinode in sys_open\n");
+     
+
+
+  }
+  
+
 
 }
 
@@ -371,8 +398,8 @@ int concurrent_writei(struct inode *ip, char *src, uint off, uint n) {
 // Returns number of bytes written.
 // Caller must hold ip->lock.
 int writei(struct inode *ip, char *src, uint off, uint n) {
-  if (!holdingsleep(&ip->lock))
-    panic("not holding lock");
+  //if (!holdingsleep(&ip->lock))
+  //  panic("not holding lock");
 
   if (ip->type == T_DEV) {
     if (ip->devid < 0 || ip->devid >= NDEV || !devsw[ip->devid].write)

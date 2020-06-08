@@ -21,10 +21,10 @@ int offset =0;
 //lab2 design
 struct spinlock lock;
 
-void filecreate(char*path){
+struct inode* filecreate(char*path){
    cprintf("Enter file create Path =%s\n",path);
 
-  concurrent_createi(path);
+  return concurrent_createi(path);
 }
 
 int fileopen(char *path,int mode){

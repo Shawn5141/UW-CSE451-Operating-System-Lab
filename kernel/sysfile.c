@@ -137,15 +137,15 @@ int sys_open(void) {
       (mode != (O_CREATE | O_RDWR))) {
     return -1;
   }
-
   if ((mode & 0xF00) == O_CREATE && ptr == NULL) {
+    cprintf("sys_open file creattion\n");
     ptr =filecreate(path);
   }
 
   //call appropriate file function
-  //  acquire(&ftable.lock);
+    //acquire(&ftable.lock);
   fd = fileopen(path,mode);
-  //  release(&ftable.lock);
+   // release(&ftable.lock);
   return fd;
 
 }

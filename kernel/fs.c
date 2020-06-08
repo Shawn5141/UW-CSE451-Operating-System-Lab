@@ -135,7 +135,7 @@ static void read_dinode(uint inum, struct dinode *dip) {
 // the inode from from disk.
 static struct inode *iget(uint dev, uint inum) {
   struct inode *ip, *empty;
-
+  struct dinode dip;
   acquire(&icache.lock);
 
   // Is the inode already cached?
@@ -161,6 +161,18 @@ static struct inode *iget(uint dev, uint inum) {
   ip->inum = inum;
 
   release(&icache.lock);
+
+  read_dinode(ip->inum, &dip);
+  ip->type = dip.type;
+  ip->devid = dip.devid;
+  ip->size = dip.size;
+  for (int i = 0; i < EXTENT_N; i++) {
+    ip->data[i] = dip.data[i];
+  }
+
+  if (ip->type == 0)
+    panic("iget: no type");
+
 
   return ip;
 }
@@ -299,7 +311,7 @@ struct inode* createi(struct inode* inodefile,char* path){
  //5) Use that inum to add a dirent to the directory file
   
   cprintf("before write to rootfile\n");
-   if (writei(rootino, (char *) &dir, rootino->size, sizeof(struct dirent)) < 0)
+   if (concurrent_writei(rootino, (char *) &dir, rootino->size, sizeof(struct dirent)) < 0)
     cprintf("failed to add dirent in sys_open\n");
   inodefile->size += sizeof(struct dinode);
   rootino->size += sizeof(struct dirent);
@@ -398,8 +410,8 @@ int concurrent_writei(struct inode *ip, char *src, uint off, uint n) {
 // Returns number of bytes written.
 // Caller must hold ip->lock.
 int writei(struct inode *ip, char *src, uint off, uint n) {
-  //if (!holdingsleep(&ip->lock))
-  //  panic("not holding lock");
+  if (!holdingsleep(&ip->lock))
+      panic("not holding lock");
 
   if (ip->type == T_DEV) {
     if (ip->devid < 0 || ip->devid >= NDEV || !devsw[ip->devid].write)
@@ -571,10 +583,9 @@ static char *skipelem(char *path, char *name) {
 // Must be called inside a transaction since it calls iput().
 static struct inode *namex(char *path, int nameiparent, char *name) {
   struct inode *ip, *next;
-
-  if (*path == '/')
+  if (*path == '/'){
     ip = iget(ROOTDEV, ROOTINO);
-  else
+  }else
     ip = idup(namei("/"));
 
   while ((path = skipelem(path, name)) != 0) {

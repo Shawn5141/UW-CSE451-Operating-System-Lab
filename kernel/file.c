@@ -29,13 +29,15 @@ struct inode* filecreate(char*path){
 
 int fileopen(char *path,int mode){
   
+  cprintf("file open path %s\n",path);
   struct inode* iptr = namei(path); // find the inode with the path - increments reference count
   
   struct stat istat ;  //TODO Not sure I can create local varible here like this or I need to allocate some memory
   // This function is inspired by thread on Ed : https://us.edstem.org/courses/399/discussion/28068
-  if(iptr == 0)
+  if(iptr == 0){
+    cprintf("iptr is none\n");
     return -1;
-
+  }
   concurrent_stati(iptr,&istat);
 
   /*

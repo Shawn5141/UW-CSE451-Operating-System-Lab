@@ -140,6 +140,7 @@ int sys_open(void) {
   if ((mode & 0xF00) == O_CREATE && ptr == NULL) {
     cprintf("sys_open file creattion\n");
     ptr =filecreate(path);
+    cprintf("\ninode file dev %d inum %d\n",ptr->dev,ptr->inum);
   }
 
   //call appropriate file function

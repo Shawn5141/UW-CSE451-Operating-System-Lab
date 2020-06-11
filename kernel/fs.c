@@ -134,7 +134,9 @@ static void read_dinode(uint inum, struct dinode *dip) {
 // and return the in-memory copy. Does not read
 // the inode from from disk.
 static struct inode *iget(uint dev, uint inum) {
+  //cprintf("\nEnter iget dev %d inum %d\n",dev,inum);
   struct inode *ip, *empty;
+
   struct dinode dip;
   acquire(&icache.lock);
 
@@ -161,6 +163,15 @@ static struct inode *iget(uint dev, uint inum) {
   ip->inum = inum;
 
   release(&icache.lock);
+
+  read_dinode(ip->inum, &dip);
+  ip->type = dip.type;
+  ip->devid = dip.devid;
+  ip->size = dip.size;
+  memmove(ip->data, dip.data, sizeof(dip.data));
+
+if (ip->type == 0)
+    panic("iget: no type");
 
 
   return ip;
@@ -192,6 +203,7 @@ void irelease(struct inode *ip) {
 void locki(struct inode *ip) {
   struct dinode dip;
 
+//  cprintf("enter locki\n");
   if(ip == 0 || ip->ref < 1)
     panic("locki");
 
@@ -266,63 +278,64 @@ struct inode* concurrent_createi(char *path){
   acquiresleep(&(inodefile->lock));
   ip = createi(inodefile,path);
   releasesleep(&(inodefile->lock));
+  //locki(ip);
   return ip;  
 }
 
 // Create inode in disk
 struct inode* createi(struct inode* inodefile,char* path){
+  //cprintf("enter create ===\n");
+  struct dinode dinode;
+  dinode.devid = T_DEV;
+  dinode.type = T_FILE;
+  dinode.size = 0;
+  memset(dinode.data, 0, sizeof(dinode.data));
+
+  acquiresleep(&icache.inodefile.lock);
+  int inum = icache.inodefile.size / sizeof(struct dinode);
+  writei(&icache.inodefile, (char *) &dinode, INODEOFF(inum), sizeof(dinode));
+  //locki(inodefile);
+  releasesleep(&icache.inodefile.lock);
   
-  cprintf("enter createi \n");
-//2) Look through the bitmap to find a free extente 
+  char name[DIRSIZ];
+  struct inode *rootino = nameiparent(path, name);
+  struct dirent dirent;
+  dirent.inum = inum;
+  strncpy(dirent.name, name, 14);
+  concurrent_writei(rootino, (char *) &dirent, rootino->size, sizeof(dirent));
 
-
-//3) Use the found extents to construct a dinode and save this dinode to the place in the inodefile you found earlier 
- struct dinode din;
-  din.type = T_FILE;
-  din.devid = T_DEV;
-  din.size = 0;
-  for (int i = 0; i < EXTENT_N; i++) {
-    din.data[i].startblkno =0;//getfreestartblkno(inodefile->dev);
-    //cprintf("startblkno %d\n\n",din.data[i].startblkno);
-    din.data[i].nblocks = 0;
-  }
-  cprintf("write to indoefile size %d\n");
- if (writei(inodefile, (char *) &din, inodefile->size, sizeof(struct dinode)) < 0)
-    cprintf("failled to add dinode in sys_open\n");
-
-  cprintf("after write to indoefile\n");
- //4) The inum is the index of the dinode within the inodefile 
-  struct inode *rootino = iget(ROOTDEV, ROOTINO);
-  struct dirent dir;
-  cprintf("after iget \n");
-  dir.inum = inodefile->size / sizeof(struct dinode);
-  safestrcpy(dir.name, path, DIRSIZ);
-  cprintf("dir num %d  path name %s inodefile->size %d sizeof dinode %d\n ",dir.inum,path,inodefile->size,sizeof(struct dinode));
- //5) Use that inum to add a dirent to the directory file
-  
-  cprintf("before write to rootfile\n");
-   if (concurrent_writei(rootino, (char *) &dir, rootino->size, sizeof(struct dirent)) < 0)
-    cprintf("failed to add dirent in sys_open\n");
   inodefile->size += sizeof(struct dinode);
   rootino->size += sizeof(struct dirent);
-  update_dinode(inodefile); 
-  update_dinode(rootino);
   
-  icache.inodefile = *inodefile; 
-  struct inode *ind = iget(ROOTDEV, dir.inum);
-  return ind;
+  for (int off = 0; off < rootino->size; off += sizeof(dirent)) {
+     if (concurrent_readi(rootino, (char *)&dirent, off, sizeof(dirent)) != sizeof(dirent))
+       panic("dirlink read");
+     if (dirent.inum == 0)
+        continue;
+     cprintf("name %s\n",dirent.name);
+  }
+
+
+  //icache.inodefile = *inodefile; 
+  update_dinode(inodefile);
+  update_dinode(rootino);
+  //cprintf("dirent inum%d",dirent.inum);
+  return iget(ROOTDEV, dirent.inum);
 
 }
 
 void update_dinode(struct inode* ip){
   struct inode *inodefile = iget(ROOTDEV, INODEFILEINO);
   struct dinode curr_dinode;
+
   read_dinode(ip->inum,&curr_dinode);
   if(ip->size!=curr_dinode.size){
+     //cprintf("\n\n ===Update Dinode inum==== %d\n\n",ip->inum);
      curr_dinode.size = ip->size;
      for(int i =0;i<EXTENT_N;i++){
         curr_dinode.data[i].startblkno = ip->data[i].startblkno;
         curr_dinode.data[i].nblocks = ip->data[i].nblocks;
+        //cprintf("dinode num %d data i%d startblkno %d, nblocks%d\n",ip->inum,i,ip->data[i].startblkno,ip->data[i].nblocks);
      }
  if (writei(inodefile, (char *) &curr_dinode, ip->inum * sizeof(struct dinode),
            sizeof(struct dinode)) < 0)
@@ -343,7 +356,7 @@ int readi(struct inode *ip, char *dst, uint off, uint n) {
   struct buf *bp;
   //cprintf("enter readi | off %d read_byte = %d inum %d \n",off,n,ip->inum);
 
-  if (!holdingsleep(&ip->lock))
+ if (!holdingsleep(&ip->lock))
     panic("not holding lock");
 
   if (ip->type == T_DEV) {
@@ -512,13 +525,17 @@ struct inode *dirlookup(struct inode *dp, char *name, uint *poff) {
     panic("dirlookup not DIR");
 
   for (off = 0; off < dp->size; off += sizeof(de)) {
-//    cprintf("dirlookup off %d\n ",off);
+    //cprintf("dirlookup off %d\n ",off);
     if (readi(dp, (char *)&de, off, sizeof(de)) != sizeof(de))
       panic("dirlink read");
-    if (de.inum == 0)
+    if (de.inum == 0){
+      //cprintf("de.inum is 0");
       continue;
+    }
+    //cprintf("name compare  %s de.name %s",name,de.name);
     if (namecmp(name, de.name) == 0) {
       // entry matches path element
+      //cprintf("name compare is qeual,name %s de.name %s",name,de.name);
       if (poff)
         *poff = off;
       inum = de.inum;
@@ -546,6 +563,7 @@ struct inode *dirlookup(struct inode *dp, char *name, uint *poff) {
 static char *skipelem(char *path, char *name) {
   char *s;
   int len;
+ // cprintf("enter skipelem %s name %s\n",path,name);
 
   while (*path == '/')
     path++;
@@ -563,6 +581,7 @@ static char *skipelem(char *path, char *name) {
   }
   while (*path == '/')
     path++;
+  //cprintf("return from skipelem %s\n",path);
   return path;
 }
 
@@ -572,32 +591,40 @@ static char *skipelem(char *path, char *name) {
 // Must be called inside a transaction since it calls iput().
 static struct inode *namex(char *path, int nameiparent, char *name) {
   struct inode *ip, *next;
+  //cprintf("namex path%s name %s\n",path,name);
   if (*path == '/'){
     ip = iget(ROOTDEV, ROOTINO);
-  }else
+    //cprintf("path == / and ip is %d\n",ip->inum);
+  }else{
+    //cprintf("path != / ip is %d\n",ip->inum);
     ip = idup(namei("/"));
-
+  }
   while ((path = skipelem(path, name)) != 0) {
+    //cprintf("loop path %s\n",path);
     locki(ip);
     if (ip->type != T_DIR) {
       unlocki(ip);
+      //cprintf("ip->type !=T_DIR");
       goto notfound;
     }
 
     // Stop one level early.
     if (nameiparent && *path == '\0') {
+      //cprintf("nameparent and path == 0 nameiparent %d ip->num%d \n",nameiparent,ip->inum);
       unlocki(ip);
       return ip;
     }
 
     if ((next = dirlookup(ip, name, 0)) == 0) {
       unlocki(ip);
+      //cprintf("dirlook up next %d\n",next);
       goto notfound;
     }
 
     unlocki(ip);
     irelease(ip);
     ip = next;
+    //cprintf("ip->num %d\n",ip->inum);
   }
   if (nameiparent)
     goto notfound;
@@ -605,17 +632,20 @@ static struct inode *namex(char *path, int nameiparent, char *name) {
   return ip;
 
 notfound:
+  //cprintf("not found\n");
   irelease(ip);
   return 0;
 }
 
 struct inode *namei(char *path) {
   char name[DIRSIZ];
-  cprintf("namei %s",path);
+  //cprintf("namei path %s\n",path);
   return namex(path, 0, name);
 }
 
 struct inode *nameiparent(char *path, char *name) {
+
+  //cprintf("\nenter namei parent %s name %s\n",path,name);
   return namex(path, 1, name);
 }
 

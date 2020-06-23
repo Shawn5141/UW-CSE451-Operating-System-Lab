@@ -9,7 +9,7 @@ xk complete and also add a few functionalities
 
 All code are programmed in C
 
-Lab 1: Interrupts and System Calls
-Lab 2: Multiprocessing
-Lab 3: Address Space Management
-Lab 4: Filesystem
+- Lab 1: Interrupts and System Calls
+- Lab 2: Multiprocessing
+- Lab 3: Address Space Management
+- Lab 4: Filesystem
